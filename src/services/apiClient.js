@@ -13,16 +13,18 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    console.log('Request interceptor - token:', token ? 'exists' : 'missing', 'URL:', config.url);
+    console.log('Request interceptor - URL:', config.url, 'Method:', config.method);
+    console.log('Request interceptor - token:', token ? 'exists' : 'missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Authorization header set');
+      console.log('Authorization header set for:', config.url);
     } else {
-      console.log('No token found, request will be sent without auth');
+      console.log('No token found for:', config.url, '- request will be sent without auth');
     }
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -46,11 +48,14 @@ const processQueue = (error, token = null) => {
 // Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
   (response) => {
+    console.log('Response interceptor - success:', response.status, 'URL:', response.config.url);
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
     console.log('Response interceptor - error status:', error.response?.status, 'URL:', originalRequest.url);
+    console.log('Response interceptor - error message:', error.message);
+    console.log('Response interceptor - error response:', error.response?.data);
 
         // If error is 401 and we haven't tried to refresh token yet
     if (error.response?.status === 401 && !originalRequest._retry) {

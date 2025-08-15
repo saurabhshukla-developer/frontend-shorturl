@@ -18,8 +18,10 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   console.log('ProtectedRoute - isAuthenticated:', isAuthenticated, 'loading:', loading);
+  console.log('ProtectedRoute - localStorage token:', localStorage.getItem('token') ? 'exists' : 'missing');
   
   if (loading) {
+    console.log('ProtectedRoute: Still loading, showing spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -28,11 +30,12 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!isAuthenticated) {
-    console.log('User not authenticated, redirecting to login');
+    console.log('ProtectedRoute: User not authenticated, redirecting to login');
+    console.log('ProtectedRoute: Current pathname:', window.location.pathname);
     return <Navigate to="/login" replace />;
   }
   
-  console.log('User authenticated, rendering protected content');
+  console.log('ProtectedRoute: User authenticated, rendering protected content');
   return children;
 };
 

@@ -22,10 +22,15 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        console.log('AuthContext: Starting initialization');
+        console.log('AuthContext: Token from localStorage:', localStorage.getItem('token') ? 'exists' : 'missing');
+        console.log('AuthContext: Current token state:', token);
+        
         if (token) {
           console.log('Initializing auth with token:', token ? 'exists' : 'missing');
           // Verify token and get user profile
           const userProfile = await authService.getProfile();
+          console.log('AuthContext: User profile received:', userProfile);
           setUser(userProfile);
           setIsAuthenticated(true);
           console.log('Auth initialized successfully');
@@ -35,15 +40,21 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('Token verification failed:', error);
+        console.error('AuthContext: Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
         // Clear invalid tokens
         logout();
       } finally {
         setLoading(false);
+        console.log('AuthContext: Initialization complete, loading set to false');
       }
     };
 
     initializeAuth();
-  }, [token]);
+  }, []); // Remove token dependency to prevent infinite loops
 
   const login = async (credentials) => {
     try {

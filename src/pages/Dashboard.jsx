@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { dashboardService } from '../services/dashboardService';
 import { urlService } from '../services/urlService';
 import { groupService } from '../services/groupService';
+import { useAuth } from '../contexts/AuthContext';
 import {
   LinkIcon,
   ChartBarIcon,
@@ -13,35 +14,177 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 const Dashboard = () => {
+  const { isAuthenticated, user } = useAuth();
   const [stats, setStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [recentUrls, setRecentUrls] = useState([]);
   const [recentGroups, setRecentGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      // Check if user is authenticated
+      if (!isAuthenticated || !user) {
+        console.log('User not authenticated, skipping dashboard data fetch');
+        console.log('Auth state:', { isAuthenticated, user: user ? 'exists' : 'null' });
+        console.log('Local storage token:', localStorage.getItem('token') ? 'exists' : 'missing');
+        setLoading(false);
+        setError('User not authenticated');
+        return;
+      }
+
+      // Prevent multiple API calls
+      if (hasFetched) {
+        console.log('Dashboard data already fetched, skipping');
+        return;
+      }
+
       try {
-        const [statsData, analyticsData, urlsData, groupsData] = await Promise.all([
+        console.log('Fetching dashboard data for user:', user.email);
+        console.log('Token from localStorage:', localStorage.getItem('token') ? 'exists' : 'missing');
+        
+        // Use Promise.allSettled to handle partial failures gracefully
+        const results = await Promise.allSettled([
           dashboardService.getDashboardStats(),
           dashboardService.getAnalytics(),
           urlService.getShortUrls(),
           groupService.getGroups(),
         ]);
 
-        setStats(statsData);
-        setAnalytics(analyticsData);
-        setRecentUrls(urlsData.slice(0, 5));
-        setRecentGroups(groupsData.slice(0, 5));
+        console.log('API call results:', results);
+
+        // Extract data with fallbacks for failed requests
+        const [statsResult, analyticsResult, urlsResult, groupsResult] = results;
+        
+        // Log detailed results for debugging
+        console.log('Detailed API results:', {
+          stats: statsResult,
+          analytics: analyticsResult,
+          urls: urlsResult,
+          groups: groupsResult
+        });
+        
+        // Set stats with fallback
+        if (statsResult.status === 'fulfilled' && statsResult.value?.data && typeof statsResult.value.data === 'object') {
+          setStats(statsResult.value.data);
+        } else {
+          const errorMessage = statsResult.reason?.message || statsResult.reason || 'Unknown error';
+          console.error('Failed to fetch stats:', errorMessage);
+          console.error('Stats result details:', statsResult);
+          setStats({ 
+            overview: { totalUrls: 0, totalClicks: 0, totalGroups: 0, activeUrls: 0, expiredUrls: 0 },
+            recentActivity: [],
+            topPerforming: [],
+            groupSummary: []
+          });
+        }
+
+        // Set analytics with fallback
+        if (analyticsResult.status === 'fulfilled' && analyticsResult.value?.data && typeof analyticsResult.value.data === 'object') {
+          setAnalytics(analyticsResult.value.data);
+        } else {
+          const errorMessage = analyticsResult.reason?.message || analyticsResult.reason || 'Unknown error';
+          console.error('Failed to fetch analytics:', errorMessage);
+          console.error('Analytics result details:', analyticsResult);
+          setAnalytics({ 
+            period: '7d',
+            clicksByDate: [],
+            urlsByDate: [],
+            groupDistribution: []
+          });
+        }
+
+        // Set recent URLs with fallback
+        if (urlsResult.status === 'fulfilled' && urlsResult.value && Array.isArray(urlsResult.value)) {
+          setRecentUrls(urlsResult.value.slice(0, 5));
+        } else {
+          const errorMessage = urlsResult.reason?.message || urlsResult.reason || 'Unknown error';
+          console.error('Failed to fetch URLs:', errorMessage);
+          console.error('URLs result details:', urlsResult);
+          setRecentUrls([]);
+        }
+
+        // Set recent groups with fallback
+        if (groupsResult.status === 'fulfilled' && groupsResult.value && Array.isArray(groupsResult.value)) {
+          setRecentGroups(groupsResult.value.slice(0, 5));
+        } else {
+          const errorMessage = groupsResult.reason?.message || groupsResult.reason || 'Unknown error';
+          console.error('Failed to fetch groups:', errorMessage);
+          console.error('Groups result details:', groupsResult);
+          setRecentGroups([]);
+        }
+
+        setHasFetched(true);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        setError(error.message || 'Failed to fetch dashboard data');
+        // Set fallback values on complete failure
+        setStats({ 
+          overview: { totalUrls: 0, totalClicks: 0, totalGroups: 0, activeUrls: 0, expiredUrls: 0 },
+          recentActivity: [],
+          topPerforming: [],
+          groupSummary: []
+        });
+        setAnalytics({ 
+          period: '7d',
+          clicksByDate: [],
+          urlsByDate: [],
+          groupDistribution: []
+        });
+        setRecentUrls([]);
+        setRecentGroups([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [isAuthenticated, user, hasFetched]);
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Error Loading Dashboard</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if user is not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="text-blue-500 text-xl mb-4">🔐</div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Authentication Required</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">Please log in to access your dashboard.</p>
+          <button 
+            onClick={() => window.location.href = '/login'} 
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -55,6 +198,72 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Debug Section - Remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">🔍 Debug Info</h3>
+          <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+            <div>Auth State: {isAuthenticated ? '✅ Authenticated' : '❌ Not Authenticated'}</div>
+            <div>User: {user ? `${user.email} (${user.id})` : 'None'}</div>
+            <div>Token: {localStorage.getItem('token') ? '✅ Exists' : '❌ Missing'}</div>
+            <div>Loading: {loading ? '✅ Yes' : '❌ No'}</div>
+            <div>Error: {error || 'None'}</div>
+          </div>
+          
+          {/* Authentication Test Buttons */}
+          <div className="mt-3 space-y-2">
+            <button 
+              onClick={() => {
+                console.log('Current localStorage:', {
+                  token: localStorage.getItem('token'),
+                  refreshToken: localStorage.getItem('refreshToken')
+                });
+                console.log('Current auth state:', { isAuthenticated, user });
+              }}
+              className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+            >
+              Log Auth State
+            </button>
+            <button 
+              onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                window.location.reload();
+              }}
+              className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 ml-2"
+            >
+              Clear Tokens
+            </button>
+            <button 
+              onClick={() => {
+                window.location.href = '/login';
+              }}
+              className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 ml-2"
+            >
+              Go to Login
+            </button>
+            <button 
+              onClick={async () => {
+                try {
+                  console.log('Testing URL service...');
+                  const urls = await urlService.getShortUrls();
+                  console.log('URL service result:', urls);
+                  
+                  console.log('Testing Group service...');
+                  const groups = await groupService.getGroups();
+                  console.log('Group service result:', groups);
+                } catch (error) {
+                  console.error('Service test error:', error);
+                }
+              }}
+              className="px-2 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 ml-2"
+            >
+              Test Services
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
@@ -76,7 +285,7 @@ const Dashboard = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total URLs</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats?.totalUrls || 0}
+                {stats?.overview?.totalUrls || 0}
               </p>
             </div>
           </div>
@@ -95,7 +304,7 @@ const Dashboard = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clicks</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats?.totalClicks || 0}
+                {stats?.overview?.totalClicks || 0}
               </p>
             </div>
           </div>
@@ -114,7 +323,7 @@ const Dashboard = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Groups</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats?.totalGroups || 0}
+                {stats?.overview?.totalGroups || 0}
               </p>
             </div>
           </div>
@@ -133,7 +342,7 @@ const Dashboard = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. CTR</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats?.averageCTR ? `${stats.averageCTR.toFixed(1)}%` : '0%'}
+                {stats?.overview?.averageCTR ? `${stats.overview.averageCTR.toFixed(1)}%` : '0%'}
               </p>
             </div>
           </div>
@@ -149,12 +358,12 @@ const Dashboard = () => {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Click Trends (Last 7 Days)</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Clicks by Date</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics?.clickTrends || []}>
+              <LineChart data={analytics?.clicksByDate || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" stroke="#6b7280" />
+                <XAxis dataKey="_id" stroke="#6b7280" />
                 <YAxis stroke="#6b7280" />
                 <Tooltip
                   contentStyle={{
@@ -182,12 +391,12 @@ const Dashboard = () => {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="card"
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Performing URLs</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Group Distribution</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics?.topUrls || []}>
+              <BarChart data={analytics?.groupDistribution || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#6b7280" />
+                <XAxis dataKey="groupName" stroke="#6b7280" />
                 <YAxis stroke="#6b7280" />
                 <Tooltip
                   contentStyle={{
@@ -196,7 +405,7 @@ const Dashboard = () => {
                     borderRadius: '8px',
                   }}
                 />
-                <Bar dataKey="clicks" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -227,15 +436,15 @@ const Dashboard = () => {
                       {url.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {url.originalUrl}
+                      {url.shortUrl}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {url.clicks || 0} clicks
+                      {url.noOfClicks || 0} clicks
                     </span>
                     <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {new Date(url.createdAt).toLocaleDateString()}
+                      {url.lastAccessed ? new Date(url.lastAccessed).toLocaleDateString() : 'Never'}
                     </span>
                   </div>
                 </div>
@@ -272,8 +481,8 @@ const Dashboard = () => {
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {new Date(group.createdAt).toLocaleDateString()}
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {group.totalClicks || 0} clicks
                     </span>
                   </div>
                 </div>

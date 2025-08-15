@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { urlService } from '../services/urlService';
-import { groupService } from '../services/groupService';
 import toast from 'react-hot-toast';
 import {
   PlusIcon,
@@ -16,18 +15,16 @@ import {
 
 const URLs = () => {
   const [urls, setUrls] = useState([]);
-  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUrl, setSelectedUrl] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     originalUrl: '',
-    groupId: '',
+    shortUrl: '',
   });
 
   useEffect(() => {
@@ -36,14 +33,19 @@ const URLs = () => {
 
   const fetchData = async () => {
     try {
-      const [urlsData, groupsData] = await Promise.all([
-        urlService.getShortUrls(),
-        groupService.getGroups(),
-      ]);
-      setUrls(urlsData);
-      setGroups(groupsData);
+      const urlsResult = await urlService.getShortUrls();
+      
+      if (urlsResult && Array.isArray(urlsResult)) {
+        setUrls(urlsResult);
+      } else {
+        console.error('Failed to fetch URLs:', urlsResult);
+        setUrls([]);
+        toast.error('Failed to fetch URLs');
+      }
     } catch (error) {
-      toast.error('Failed to fetch data');
+      console.error('Error fetching URLs:', error);
+      toast.error('Failed to fetch URLs');
+      setUrls([]);
     } finally {
       setLoading(false);
     }
@@ -51,13 +53,27 @@ const URLs = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast.error('URL name is required');
+      return;
+    }
+    
+    if (!formData.originalUrl.trim()) {
+      toast.error('Original URL is required');
+      return;
+    }
+    
     try {
+      console.log('Submitting form data:', formData);
       await urlService.createShortUrl(formData);
       toast.success('URL created successfully!');
       setShowCreateModal(false);
       resetForm();
       fetchData();
     } catch (error) {
+      console.error('Error creating URL:', error);
       toast.error(error.message || 'Failed to create URL');
     }
   };
@@ -91,16 +107,17 @@ const URLs = () => {
     setFormData({
       name: '',
       originalUrl: '',
-      groupId: '',
+      shortUrl: '',
     });
   };
 
   const openEditModal = (url) => {
+    if (!url) return;
     setSelectedUrl(url);
     setFormData({
-      name: url.name,
-      originalUrl: url.originalUrl,
-      groupId: url.groupId || '',
+      name: url.name || '',
+      originalUrl: url.originalUrl || '',
+      shortUrl: url.shortUrl || '',
     });
     setShowEditModal(true);
   };
@@ -119,11 +136,10 @@ const URLs = () => {
     }
   };
 
-  const filteredUrls = urls.filter(url => {
+  const filteredUrls = (urls || []).filter(url => {
     const matchesSearch = url.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          url.originalUrl.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGroup = !selectedGroup || url.groupId === selectedGroup;
-    return matchesSearch && matchesGroup;
+    return matchesSearch;
   });
 
   if (loading) {
@@ -153,7 +169,7 @@ const URLs = () => {
 
       {/* Filters and Search */}
       <div className="card">
-        <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
               <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -165,20 +181,6 @@ const URLs = () => {
                 className="input-field pl-10"
               />
             </div>
-          </div>
-          <div className="sm:w-48">
-            <select
-              value={selectedGroup}
-              onChange={(e) => setSelectedGroup(e.target.value)}
-              className="input-field"
-            >
-              <option value="">All Groups</option>
-              {groups.map(group => (
-                <option key={group._id} value={group._id}>
-                  {group.name}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
       </div>
@@ -192,9 +194,7 @@ const URLs = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   URL Details
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Group
-                </th>
+
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Clicks
                 </th>
@@ -207,8 +207,8 @@ const URLs = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredUrls.length > 0 ? (
-                filteredUrls.map((url) => (
+              {(filteredUrls || []).length > 0 ? (
+                (filteredUrls || []).map((url) => (
                   <motion.tr
                     key={url._id}
                     initial={{ opacity: 0 }}
@@ -222,33 +222,29 @@ const URLs = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {url.name}
+                            {url.name || 'Unnamed URL'}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                            {url.originalUrl}
+                            {url.originalUrl || 'No URL'}
                           </div>
                           <div className="text-xs text-primary-600 dark:text-primary-400 font-mono">
-                            {`${window.location.origin}/${url.shortCode}`}
+                            {url.shortUrl ? `${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}` : 'No short URL'}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                        {groups.find(g => g._id === url.groupId)?.name || 'No Group'}
-                      </span>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {url.clicks || 0}
+                      {url.noOfClicks || url.clicks || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(url.createdAt).toLocaleDateString()}
+                      {url.createdAt ? new Date(url.createdAt).toLocaleDateString() : 'Unknown'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => copyToClipboard(`${window.location.origin}/${url.shortCode}`)}
-                          className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                          onClick={() => url.shortUrl ? copyToClipboard(`${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}`) : toast.error('No short URL available')}
+                          className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
                           title="Copy short URL"
                         >
                           <ClipboardIcon className="h-4 w-4" />
@@ -273,8 +269,8 @@ const URLs = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                    {searchTerm || selectedGroup ? 'No URLs match your filters' : 'No URLs created yet'}
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    {searchTerm ? 'No URLs match your search' : 'No URLs created yet'}
                   </td>
                 </tr>
               )}
@@ -303,7 +299,7 @@ const URLs = () => {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          URL Name
+                          URL Name <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -317,7 +313,7 @@ const URLs = () => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Original URL
+                          Original URL <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="url"
@@ -331,20 +327,18 @@ const URLs = () => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Group (Optional)
+                          Desired Short URL (Optional)
                         </label>
-                        <select
-                          value={formData.groupId}
-                          onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
+                        <input
+                          type="text"
+                          value={formData.shortUrl}
+                          onChange={(e) => setFormData({ ...formData, shortUrl: e.target.value })}
                           className="input-field"
-                        >
-                          <option value="">No Group</option>
-                          {groups.map(group => (
-                            <option key={group._id} value={group._id}>
-                              {group.name}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="Leave empty for auto-generation"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Only letters, numbers, hyphens, and underscores (3-50 characters)
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -391,7 +385,7 @@ const URLs = () => {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          URL Name
+                          URL Name <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -405,7 +399,7 @@ const URLs = () => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Original URL
+                          Original URL <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="url"
@@ -419,20 +413,18 @@ const URLs = () => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Group (Optional)
+                          Desired Short URL (Optional)
                         </label>
-                        <select
-                          value={formData.groupId}
-                          onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
+                        <input
+                          type="text"
+                          value={formData.shortUrl}
+                          onChange={(e) => setFormData({ ...formData, shortUrl: e.target.value })}
                           className="input-field"
-                        >
-                          <option value="">No Group</option>
-                          {groups.map(group => (
-                            <option key={group._id} value={group._id}>
-                              {group.name}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="Leave empty for auto-generation"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Only letters, numbers, hyphens, and underscores (3-50 characters)
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -475,7 +467,7 @@ const URLs = () => {
                 <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Delete URL</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Are you sure you want to delete "{selectedUrl?.name}"? This action cannot be undone.
+                    Are you sure you want to delete "{selectedUrl?.name || 'this URL'}"? This action cannot be undone.
                   </p>
                 </div>
                 
