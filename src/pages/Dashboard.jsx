@@ -57,11 +57,13 @@ const Dashboard = () => {
         
         // Set stats with fallback
         if (statsResult.status === 'fulfilled' && statsResult.value?.data && typeof statsResult.value.data === 'object') {
+          console.log('Dashboard stats received:', statsResult.value.data);
           setStats(statsResult.value.data);
         } else {
           const errorMessage = statsResult.reason?.message || statsResult.reason || 'Unknown error';
+          console.log('Dashboard stats failed, using fallback:', errorMessage);
           setStats({ 
-            overview: { totalUrls: 0, totalClicks: 0, totalGroups: 0, activeUrls: 0, expiredUrls: 0 },
+            overview: { totalUrls: 0, totalClicks: 0, totalGroups: 0, activeUrls: 0, expiredUrls: 0, averageCTR: 0 },
             recentActivity: [],
             topPerforming: [],
             groupSummary: []
@@ -102,7 +104,7 @@ const Dashboard = () => {
         setError(error.message || 'Failed to fetch dashboard data');
         // Set fallback values on complete failure
         setStats({ 
-          overview: { totalUrls: 0, totalClicks: 0, totalGroups: 0, activeUrls: 0, expiredUrls: 0 },
+          overview: { totalUrls: 0, totalClicks: 0, totalGroups: 0, activeUrls: 0, expiredUrls: 0, averageCTR: 0 },
           recentActivity: [],
           topPerforming: [],
           groupSummary: []
@@ -280,7 +282,7 @@ const Dashboard = () => {
             <div className="ml-3 flex-1">
               <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Avg. CTR</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats?.overview?.averageCTR ? `${stats.overview.averageCTR.toFixed(1)}%` : '0%'}
+                {stats?.overview?.averageCTR !== undefined ? `${stats.overview.averageCTR.toFixed(1)}%` : '0%'}
               </p>
               <div className="flex items-center mt-1">
                 <ArrowTrendingUpIcon className="h-3 w-3 text-green-500 mr-1" />

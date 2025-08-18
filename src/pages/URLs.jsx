@@ -107,8 +107,14 @@ const URLs = () => {
     }
     
     try {
-      console.log('Submitting form data:', formData);
-      await urlService.createShortUrl(formData);
+      // Handle empty groupId - convert empty string to null
+      const createData = {
+        ...formData,
+        groupId: formData.groupId === '' ? null : formData.groupId
+      };
+      
+      console.log('Submitting form data:', createData);
+      await urlService.createShortUrl(createData);
       toast.success('URL created successfully!');
       setShowCreateModal(false);
       resetForm();
@@ -122,12 +128,20 @@ const URLs = () => {
   const handleEdit = async (e) => {
     e.preventDefault();
     try {
-      await urlService.updateShortUrl(selectedUrl._id, formData);
+      // Handle empty groupId - convert empty string to null
+      const updateData = {
+        ...formData,
+        groupId: formData.groupId === '' ? null : formData.groupId
+      };
+      
+      console.log('Submitting edit form data:', updateData);
+      await urlService.updateShortUrl(selectedUrl._id, updateData);
       toast.success('URL updated successfully!');
       setShowEditModal(false);
       resetForm();
       fetchData();
     } catch (error) {
+      console.error('Error updating URL:', error);
       toast.error(error.message || 'Failed to update URL');
     }
   };
@@ -145,6 +159,7 @@ const URLs = () => {
   };
 
   const resetForm = () => {
+    console.log('Resetting form data');
     setFormData({
       name: '',
       originalUrl: '',
@@ -155,13 +170,16 @@ const URLs = () => {
 
   const openEditModal = (url) => {
     if (!url) return;
+    console.log('Opening edit modal for URL:', url);
     setSelectedUrl(url);
-    setFormData({
+    const formDataToSet = {
       name: url.name || '',
       originalUrl: url.originalUrl || '',
       shortUrl: url.shortUrl || '',
       groupId: url.groupId?._id || url.groupId || '',
-    });
+    };
+    console.log('Setting form data:', formDataToSet);
+    setFormData(formDataToSet);
     setShowEditModal(true);
   };
 
@@ -214,7 +232,10 @@ const URLs = () => {
           <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your shortened URLs and track their performance. Click on group badges to view group analytics.</p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            resetForm();
+            setShowCreateModal(true);
+          }}
           className="btn-primary flex items-center mt-4 sm:mt-0 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
@@ -377,7 +398,10 @@ const URLs = () => {
               </p>
               {!searchTerm && (
                 <button
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => {
+                    resetForm();
+                    setShowCreateModal(true);
+                  }}
                   className="btn-primary inline-flex items-center"
                 >
                   <PlusIcon className="h-5 w-5 mr-2" />
@@ -399,7 +423,10 @@ const URLs = () => {
             className="fixed inset-0 z-50 overflow-y-auto"
           >
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowCreateModal(false)} />
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => {
+                setShowCreateModal(false);
+                resetForm();
+              }} />
               
               <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form onSubmit={handleCreate}>
@@ -491,7 +518,10 @@ const URLs = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowCreateModal(false)}
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        resetForm();
+                      }}
                       className="btn-secondary w-full sm:w-auto mt-3 sm:mt-0"
                     >
                       Cancel
@@ -514,7 +544,10 @@ const URLs = () => {
             className="fixed inset-0 z-50 overflow-y-auto"
           >
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowEditModal(false)} />
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => {
+                setShowEditModal(false);
+                resetForm();
+              }} />
               
               <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form onSubmit={handleEdit}>
@@ -606,7 +639,10 @@ const URLs = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowEditModal(false)}
+                      onClick={() => {
+                        setShowEditModal(false);
+                        resetForm();
+                      }}
                       className="btn-secondary w-full sm:w-auto mt-3 sm:mt-0"
                     >
                       Cancel
