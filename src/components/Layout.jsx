@@ -12,6 +12,8 @@ import {
   SunIcon,
   MoonIcon,
   ArrowRightOnRectangleIcon,
+  BellIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,10 +25,10 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'URLs', href: '/urls', icon: LinkIcon },
-    { name: 'Groups', href: '/groups', icon: FolderIcon },
-    { name: 'Profile', href: '/profile', icon: UserIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, description: 'Overview and analytics' },
+    { name: 'URLs', href: '/urls', icon: LinkIcon, description: 'Manage your short URLs' },
+    { name: 'Groups', href: '/groups', icon: FolderIcon, description: 'Organize URLs by groups' },
+    { name: 'Profile', href: '/profile', icon: UserIcon, description: 'Account settings' },
   ];
 
   const handleLogout = () => {
@@ -37,7 +39,7 @@ const Layout = ({ children }) => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Mobile sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -47,47 +49,52 @@ const Layout = ({ children }) => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 lg:hidden"
           >
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-              className="relative flex w-full max-w-xs flex-1 flex-col bg-white dark:bg-gray-800 pt-5 pb-4"
+              className="relative flex w-full max-w-xs flex-1 flex-col bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl pt-5 pb-4 shadow-2xl"
             >
               <div className="absolute top-0 right-0 -mr-12 pt-2">
                 <button
                   type="button"
-                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/20"
                   onClick={() => setSidebarOpen(false)}
                 >
                   <XMarkIcon className="h-6 w-6 text-white" />
                 </button>
               </div>
               
-              <div className="flex flex-shrink-0 items-center px-4">
-                <Link to="/" className="flex items-center">
-                  <div className="h-8 w-8 bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg flex items-center justify-center">
-                    <LinkIcon className="h-5 w-5 text-white" />
+              <div className="flex flex-shrink-0 items-center px-6">
+                <Link to="/" className="flex items-center group">
+                  <div className="h-10 w-10 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                    <LinkIcon className="h-6 w-6 text-white" />
                   </div>
-                  <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">URLShortner</span>
+                  <span className="ml-3 text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">URLShortner</span>
                 </Link>
               </div>
               
-              <nav className="mt-5 h-full flex-1 space-y-1 px-2">
+              <nav className="mt-8 h-full flex-1 space-y-2 px-4">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                    className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-primary-100 text-primary-900 dark:bg-primary-900 dark:text-primary-100'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                        ? 'bg-gradient-to-r from-primary-500/10 to-primary-600/10 text-primary-700 dark:text-primary-300 border border-primary-200/50 dark:border-primary-700/50 shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white'
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.name}
+                    <item.icon className={`mr-3 h-5 w-5 transition-colors ${
+                      isActive(item.href) ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-200'
+                    }`} />
+                    <div>
+                      <div className="font-semibold">{item.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.description}</div>
+                    </div>
                   </Link>
                 ))}
               </nav>
@@ -97,45 +104,72 @@ const Layout = ({ children }) => {
       </AnimatePresence>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex min-h-0 flex-1 flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
-            <div className="flex flex-shrink-0 items-center px-4">
-              <Link to="/" className="flex items-center">
-                <div className="h-8 w-8 bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg flex items-center justify-center">
-                  <LinkIcon className="h-5 w-5 text-white" />
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
+        <div className="flex min-h-0 flex-1 flex-col bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+          <div className="flex flex-1 flex-col overflow-y-auto pt-8 pb-6">
+            <div className="flex flex-shrink-0 items-center px-8">
+              <Link to="/" className="flex items-center group">
+                <div className="h-12 w-12 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <LinkIcon className="h-7 w-7 text-white" />
                 </div>
-                <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">URLShortner</span>
+                <span className="ml-4 text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">URLShortner</span>
               </Link>
             </div>
             
-            <nav className="mt-5 flex-1 space-y-1 px-2">
+            <nav className="mt-10 flex-1 space-y-3 px-6">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={`group flex items-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-200 ${
                     isActive(item.href)
-                      ? 'bg-primary-100 text-primary-900 dark:bg-primary-900 dark:text-primary-100'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                      ? 'bg-gradient-to-r from-primary-500/10 to-primary-600/10 text-primary-700 dark:text-primary-300 border border-primary-200/50 dark:border-primary-700/50 shadow-sm'
+                      : 'text-gray-700 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white'
                   }`}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
+                  <item.icon className={`mr-4 h-5 w-5 transition-colors ${
+                    isActive(item.href) ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-200'
+                  }`} />
+                  <div>
+                    <div className="font-semibold">{item.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.description}</div>
+                  </div>
                 </Link>
               ))}
             </nav>
+
+            {/* User profile section at bottom */}
+            <div className="px-6 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
+              <div className="flex items-center p-4 bg-gray-50/80 dark:bg-gray-700/50 rounded-xl">
+                <div className="h-10 w-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm">
+                    {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
+                </div>
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.name || 'User'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-600/50"
+                  title="Logout"
+                >
+                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-72">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             type="button"
-            className="-m-2.5 p-2.5 text-gray-700 dark:text-gray-300 lg:hidden"
+            className="-m-2.5 p-2.5 text-gray-700 dark:text-gray-300 lg:hidden hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             onClick={() => setSidebarOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
@@ -144,11 +178,23 @@ const Layout = ({ children }) => {
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1"></div>
             
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
+            <div className="flex items-center gap-x-3 lg:gap-x-4">
+              {/* Notifications */}
+              <button className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 relative">
+                <BellIcon className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+              </button>
+
+              {/* Settings */}
+              <button className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <Cog6ToothIcon className="h-5 w-5" />
+              </button>
+
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200 transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDark ? (
                   <SunIcon className="h-5 w-5" />
@@ -157,18 +203,18 @@ const Layout = ({ children }) => {
                 )}
               </button>
 
-              {/* User menu */}
-              <div className="flex items-center gap-x-3">
-                <div className="hidden md:block">
+              {/* User menu - Desktop only */}
+              <div className="hidden md:flex items-center gap-x-3">
+                <div className="text-right">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-x-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="flex items-center gap-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                  <span className="hidden md:block">Logout</span>
+                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  <span>Logout</span>
                 </button>
               </div>
             </div>
@@ -176,7 +222,7 @@ const Layout = ({ children }) => {
         </div>
 
         {/* Page content */}
-        <main className="py-6">
+        <main className="py-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {children}
           </div>
