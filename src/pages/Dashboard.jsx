@@ -57,11 +57,9 @@ const Dashboard = () => {
         
         // Set stats with fallback
         if (statsResult.status === 'fulfilled' && statsResult.value?.data && typeof statsResult.value.data === 'object') {
-          console.log('Dashboard stats received:', statsResult.value.data);
           setStats(statsResult.value.data);
         } else {
           const errorMessage = statsResult.reason?.message || statsResult.reason || 'Unknown error';
-          console.log('Dashboard stats failed, using fallback:', errorMessage);
           setStats({ 
             overview: { totalUrls: 0, totalClicks: 0, totalGroups: 0, activeUrls: 0, expiredUrls: 0, averageCTR: 0 },
             recentActivity: [],
@@ -397,7 +395,7 @@ const Dashboard = () => {
             <div className="space-y-3">
               {recentUrls.length > 0 ? (
                 recentUrls.map((url, index) => (
-                  <div key={url._id} className="flex items-center justify-between p-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
+                  <div key={url._id || `recent-url-${index}`} className="flex items-center justify-between p-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-1">
                         {url.name}
@@ -447,7 +445,7 @@ const Dashboard = () => {
             <div className="space-y-3">
               {recentGroups.length > 0 ? (
                 recentGroups.map((group, index) => (
-                  <div key={group._id} className="flex items-center justify-between p-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
+                  <div key={group._id || `recent-group-${index}`} className="flex items-center justify-between p-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-1">
                         {group.name}

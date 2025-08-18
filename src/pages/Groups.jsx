@@ -113,7 +113,7 @@ const Groups = () => {
     const groupUrls = urls.filter(url => 
       url.groupId?._id === groupId || url.groupId === groupId
     );
-    console.log(`Group ${groupId} stats:`, { groupUrls, totalUrls: urls.length });
+    
     const totalClicks = groupUrls.reduce((sum, url) => sum + (url.noOfClicks || url.clicks || 0), 0);
     return {
       urlCount: groupUrls.length,

@@ -22,34 +22,19 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        console.log('AuthContext: Starting initialization');
-        console.log('AuthContext: Token from localStorage:', localStorage.getItem('token') ? 'exists' : 'missing');
-        console.log('AuthContext: Current token state:', token);
-        
         if (token) {
-          console.log('Initializing auth with token:', token ? 'exists' : 'missing');
           // Verify token and get user profile
           const userProfile = await authService.getProfile();
-          console.log('AuthContext: User profile received:', userProfile);
           setUser(userProfile);
           setIsAuthenticated(true);
-          console.log('Auth initialized successfully');
         } else {
-          console.log('No token found, setting loading to false');
           setLoading(false);
         }
       } catch (error) {
-        console.error('Token verification failed:', error);
-        console.error('AuthContext: Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        });
         // Clear invalid tokens
         logout();
       } finally {
         setLoading(false);
-        console.log('AuthContext: Initialization complete, loading set to false');
       }
     };
 
@@ -58,12 +43,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      console.log('Login attempt with credentials:', { email: credentials.email });
       const response = await authService.login(credentials);
-      console.log('Login response received:', response);
       
       const { tokens, user: userData } = response;
-      console.log('Tokens received:', { accessToken: tokens.accessToken ? 'exists' : 'missing', refreshToken: tokens.refreshToken ? 'exists' : 'missing' });
       
       setToken(tokens.accessToken);
       setRefreshToken(tokens.refreshToken);
@@ -73,11 +55,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', tokens.accessToken);
       localStorage.setItem('refreshToken', tokens.refreshToken);
       
-      console.log('Login state updated, tokens stored in localStorage');
       toast.success('Login successful!');
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
       toast.error(error.message || 'Login failed');
       return { success: false, error: error.message };
     }
@@ -104,7 +84,7 @@ export const AuthProvider = ({ children }) => {
     
     // Call logout API
     if (token) {
-      authService.logout().catch(console.error);
+      authService.logout().catch(() => {});
     }
   };
 
@@ -169,7 +149,6 @@ export const AuthProvider = ({ children }) => {
       
       return tokens.accessToken;
     } catch (error) {
-      console.error('Token refresh failed:', error);
       logout();
       throw error;
     }

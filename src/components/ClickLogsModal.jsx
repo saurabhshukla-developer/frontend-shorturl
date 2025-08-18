@@ -28,12 +28,7 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
   const shouldBeOpen = useRef(isOpen);
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
 
-  // Debug logging
   useEffect(() => {
-    console.log('ClickLogsModal - isOpen prop changed:', isOpen);
-    console.log('ClickLogsModal - urlId:', urlId);
-    console.log('ClickLogsModal - urlName:', urlName);
-    
     shouldBeOpen.current = isOpen;
     setInternalIsOpen(isOpen);
   }, [isOpen, urlId, urlName]);
@@ -42,16 +37,11 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
   const fetchClickLogs = useCallback(async () => {
     if (!urlId) return;
     
-    console.log('ClickLogsModal - Fetching click logs for URL:', urlId);
-    
     try {
       setLoading(true);
       const response = await urlService.getUrlClickLogs(urlId, { page: 1, limit: 100 });
       
-      console.log('ClickLogsModal - API response:', response);
-      
       if (response.success) {
-        console.log('Backend response data:', response.data);
         setClickLogs(response.data.clickLogs);
         setStats(response.data.stats);
         setTopCountries(response.data.topCountries || []);
@@ -62,7 +52,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
         processAnalyticsData(response.data.clickLogs);
       }
     } catch (error) {
-      console.error('ClickLogsModal - Error fetching click logs:', error);
       toast.error('Failed to fetch click logs: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
@@ -71,7 +60,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
 
   // Process analytics data from click logs
   const processAnalyticsData = (logs) => {
-    console.log('Processing analytics data from logs:', logs);
     
     // Countries
     const countryCounts = {};
@@ -103,7 +91,7 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
       }
     });
     
-    console.log('Processed counts:', { countryCounts, browserCounts, osCounts, ispCounts });
+
     
       // Update top countries if we have data and backend didn't provide it
   if (Object.keys(countryCounts).length > 0) {
@@ -112,7 +100,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
     setTopCountries(processedCountries);
-    console.log('Set top countries:', processedCountries);
   }
   
   // Update top browsers if we have data and backend didn't provide it
@@ -122,7 +109,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
     setTopBrowsers(processedBrowsers);
-    console.log('Set top browsers:', processedBrowsers);
   }
     
     setTopOperatingSystems(
@@ -143,13 +129,11 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
   // Only fetch when modal opens
   useEffect(() => {
     if (internalIsOpen && urlId) {
-      console.log('ClickLogsModal - Modal opened, fetching data...');
       fetchClickLogs();
     }
   }, [internalIsOpen, urlId, fetchClickLogs]);
 
   const handleClose = useCallback(() => {
-    console.log('ClickLogsModal - handleClose called');
     setInternalIsOpen(false);
     onClose();
   }, [onClose]);
@@ -219,25 +203,10 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
     clicks: os.count
   })) : [{ name: 'No Data', clicks: 0 }];
 
-  // Debug logging for chart data
-  console.log('Chart Data Debug:', {
-    topCountries,
-    topBrowsers,
-    topDevices,
-    topOperatingSystems,
-    countryChartData,
-    browserChartData,
-    deviceChartData,
-    osChartData
-  });
-
   // Don't render anything if modal is not open
   if (!internalIsOpen) {
-    console.log('ClickLogsModal - Modal not open, not rendering');
     return null;
   }
-
-  console.log('ClickLogsModal - Rendering modal with internalIsOpen:', internalIsOpen);
 
   return (
     <div 
@@ -303,7 +272,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              console.log('ClickLogsModal - Close button clicked');
               handleClose();
             }}
             style={{
@@ -450,7 +418,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
                 Top Countries
               </h4>
               {countryChartData.length > 0 && countryChartData[0].name !== 'No Data' ? (
-                console.log('Rendering country chart with data:', countryChartData) ||
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -507,7 +474,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
                 🌐 Top Browsers
               </h4>
               {browserChartData.length > 0 && browserChartData[0].name !== 'No Data' ? (
-                console.log('Rendering browser chart with data:', browserChartData) ||
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={browserChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -561,7 +527,6 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
                 💻 Top Operating Systems
               </h4>
               {osChartData.length > 0 && osChartData[0].name !== 'No Data' ? (
-                console.log('Rendering OS chart with data:', osChartData) ||
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={osChartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -852,7 +817,7 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
         </div>
       </div>
       
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }

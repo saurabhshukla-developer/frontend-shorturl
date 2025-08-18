@@ -71,7 +71,6 @@ const Register = () => {
         navigate('/login');
       }
     } catch (error) {
-      console.error('Registration error:', error);
     } finally {
       setLoading(false);
     }

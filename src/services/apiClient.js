@@ -13,18 +13,12 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    console.log('Request interceptor - URL:', config.url, 'Method:', config.method);
-    console.log('Request interceptor - token:', token ? 'exists' : 'missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Authorization header set for:', config.url);
-    } else {
-      console.log('No token found for:', config.url, '- request will be sent without auth');
     }
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -48,18 +42,13 @@ const processQueue = (error, token = null) => {
 // Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('Response interceptor - success:', response.status, 'URL:', response.config.url);
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
-    console.log('Response interceptor - error status:', error.response?.status, 'URL:', originalRequest.url);
-    console.log('Response interceptor - error message:', error.message);
-    console.log('Response interceptor - error response:', error.response?.data);
 
         // If error is 401 and we haven't tried to refresh token yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log('Attempting token refresh...');
       originalRequest._retry = true;
       
       if (isRefreshing) {
@@ -96,7 +85,6 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
         // Process queued requests with error
         processQueue(refreshError, null);
         
@@ -113,11 +101,9 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
       }
     } else if (error.response?.status === 429) {
-      console.log('Rate limited, not attempting token refresh');
       // Don't attempt token refresh for rate limiting errors
       return Promise.reject(error);
     } else if (error.response?.status === 401 && originalRequest._retry) {
-      console.log('Token refresh already attempted, redirecting to login');
       // Token refresh already attempted, redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');

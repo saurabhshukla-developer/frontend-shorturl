@@ -13,13 +13,10 @@ class GroupService {
   async getGroups() {
     try {
       const response = await apiClient.get('/api/groups');
-      console.log('Group service response:', response.data);
       // The backend returns { success: true, data: [], pagination: {...} }
       return response.data.data || [];
     } catch (error) {
-      console.error('Group service error:', error);
       const errorMessage = this.handleError(error);
-      console.error('Handled error message:', errorMessage.message);
       throw errorMessage;
     }
   }

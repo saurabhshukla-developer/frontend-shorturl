@@ -53,7 +53,6 @@ const Profile = () => {
         setIsEditing(false);
       }
     } catch (error) {
-      console.error('Profile update error:', error);
     } finally {
       setLoading(false);
     }
@@ -89,7 +88,6 @@ const Profile = () => {
         });
       }
     } catch (error) {
-      console.error('Password change error:', error);
     } finally {
       setLoading(false);
     }

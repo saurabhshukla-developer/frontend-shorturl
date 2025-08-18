@@ -17,11 +17,7 @@ import ResetPassword from './pages/ResetPassword';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
-  console.log('ProtectedRoute - isAuthenticated:', isAuthenticated, 'loading:', loading);
-  console.log('ProtectedRoute - localStorage token:', localStorage.getItem('token') ? 'exists' : 'missing');
-  
   if (loading) {
-    console.log('ProtectedRoute: Still loading, showing spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -30,20 +26,15 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!isAuthenticated) {
-    console.log('ProtectedRoute: User not authenticated, redirecting to login');
-    console.log('ProtectedRoute: Current pathname:', window.location.pathname);
     return <Navigate to="/login" replace />;
   }
   
-  console.log('ProtectedRoute: User authenticated, rendering protected content');
   return children;
 };
 
 // Public Route Component (redirects authenticated users to dashboard)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
-  console.log('PublicRoute - isAuthenticated:', isAuthenticated, 'loading:', loading);
   
   if (loading) {
     return (
@@ -54,11 +45,9 @@ const PublicRoute = ({ children }) => {
   }
   
   if (isAuthenticated) {
-    console.log('User already authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
   
-  console.log('User not authenticated, rendering public content');
   return children;
 };
 

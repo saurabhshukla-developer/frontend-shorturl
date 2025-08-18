@@ -40,22 +40,7 @@ const URLs = () => {
     groupId: '',
   });
 
-  // Debug logging for modal state
-  useEffect(() => {
-    console.log('URLs - showClickLogsModal changed:', showClickLogsModal);
-    console.log('URLs - Stack trace:', new Error().stack);
-  }, [showClickLogsModal]);
 
-  useEffect(() => {
-    console.log('URLs - selectedUrl changed:', selectedUrl);
-  }, [selectedUrl]);
-
-  // Prevent modal from closing unexpectedly
-  useEffect(() => {
-    if (showClickLogsModal && selectedUrl) {
-      console.log('URLs - Modal should be open, ensuring it stays open');
-    }
-  }, [showClickLogsModal, selectedUrl]);
 
   useEffect(() => {
     fetchData();
@@ -69,12 +54,10 @@ const URLs = () => {
       if (urlsResult && Array.isArray(urlsResult)) {
         setUrls(urlsResult);
       } else {
-        console.error('Failed to fetch URLs:', urlsResult);
         setUrls([]);
         toast.error('Failed to fetch URLs');
       }
     } catch (error) {
-      console.error('Error fetching URLs:', error);
       toast.error('Failed to fetch URLs');
       setUrls([]);
     } finally {
@@ -87,7 +70,6 @@ const URLs = () => {
       const groupsResult = await groupService.getGroups();
       setGroups(groupsResult || []);
     } catch (error) {
-      console.error('Error fetching groups:', error);
       setGroups([]);
     }
   };
@@ -113,14 +95,12 @@ const URLs = () => {
         groupId: formData.groupId === '' ? null : formData.groupId
       };
       
-      console.log('Submitting form data:', createData);
       await urlService.createShortUrl(createData);
       toast.success('URL created successfully!');
       setShowCreateModal(false);
       resetForm();
       fetchData();
     } catch (error) {
-      console.error('Error creating URL:', error);
       toast.error(error.message || 'Failed to create URL');
     }
   };
@@ -134,14 +114,12 @@ const URLs = () => {
         groupId: formData.groupId === '' ? null : formData.groupId
       };
       
-      console.log('Submitting edit form data:', updateData);
       await urlService.updateShortUrl(selectedUrl._id, updateData);
       toast.success('URL updated successfully!');
       setShowEditModal(false);
       resetForm();
       fetchData();
     } catch (error) {
-      console.error('Error updating URL:', error);
       toast.error(error.message || 'Failed to update URL');
     }
   };
@@ -159,7 +137,6 @@ const URLs = () => {
   };
 
   const resetForm = () => {
-    console.log('Resetting form data');
     setFormData({
       name: '',
       originalUrl: '',
@@ -170,7 +147,6 @@ const URLs = () => {
 
   const openEditModal = (url) => {
     if (!url) return;
-    console.log('Opening edit modal for URL:', url);
     setSelectedUrl(url);
     const formDataToSet = {
       name: url.name || '',
@@ -178,7 +154,6 @@ const URLs = () => {
       shortUrl: url.shortUrl || '',
       groupId: url.groupId?._id || url.groupId || '',
     };
-    console.log('Setting form data:', formDataToSet);
     setFormData(formDataToSet);
     setShowEditModal(true);
   };
@@ -189,10 +164,8 @@ const URLs = () => {
   };
 
   const openClickLogsModal = (url) => {
-    console.log('URLs - Opening click logs modal for URL:', url);
     setSelectedUrl(url);
     setShowClickLogsModal(true);
-    console.log('URLs - Modal state set to true');
   };
 
   const openGroupDetailsModal = (group) => {
@@ -258,9 +231,9 @@ const URLs = () => {
       {/* URLs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(filteredUrls || []).length > 0 ? (
-          (filteredUrls || []).map((url) => (
+          (filteredUrls || []).map((url, index) => (
             <motion.div
-              key={url._id}
+              key={url._id || `url-${index}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}

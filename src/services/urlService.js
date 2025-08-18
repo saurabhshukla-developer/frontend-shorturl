@@ -3,12 +3,9 @@ import { apiClient } from './apiClient';
 class URLService {
   async createShortUrl(urlData) {
     try {
-      console.log('URL service - creating short URL with data:', urlData);
       const response = await apiClient.post('/api/urls', urlData);
-      console.log('URL service - response received:', response.data);
       return response.data;
     } catch (error) {
-      console.error('URL service - error creating short URL:', error);
       throw this.handleError(error);
     }
   }
@@ -16,13 +13,10 @@ class URLService {
   async getShortUrls() {
     try {
       const response = await apiClient.get('/api/urls');
-      console.log('URL service response:', response.data);
       // The backend returns { success: true, data: [], pagination: {...} }
       return response.data.data || [];
     } catch (error) {
-      console.error('URL service error:', error);
       const errorMessage = this.handleError(error);
-      console.error('Handled error message:', errorMessage.message);
       throw errorMessage;
     }
   }

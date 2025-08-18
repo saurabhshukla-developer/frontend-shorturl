@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { urlService } from '../services/urlService';
 import toast from 'react-hot-toast';
@@ -15,22 +15,18 @@ import {
 } from '@heroicons/react/24/outline';
 
 const GroupDetailsModal = ({ isOpen, onClose, group, urls }) => {
-  const [groupUrls, setGroupUrls] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showClickLogsModal, setShowClickLogsModal] = useState(false);
   const [selectedUrl, setSelectedUrl] = useState(null);
 
-  useEffect(() => {
-    if (isOpen && group && urls) {
+  const groupUrls = useMemo(() => {
+    if (isOpen && group && urls && Array.isArray(urls)) {
       // Filter URLs that belong to this group
-      const filteredUrls = urls.filter(url => 
-        url.groupId?._id === group._id || url.groupId === group._id
+      return urls.filter(url => 
+        url && (url.groupId?._id === group._id || url.groupId === group._id)
       );
-      console.log(`GroupDetailsModal - Group:`, group);
-      console.log(`GroupDetailsModal - All URLs:`, urls);
-      console.log(`GroupDetailsModal - Filtered URLs:`, filteredUrls);
-      setGroupUrls(filteredUrls);
     }
+    return [];
   }, [isOpen, group, urls]);
 
   const copyToClipboard = async (text) => {
@@ -47,29 +43,26 @@ const GroupDetailsModal = ({ isOpen, onClose, group, urls }) => {
     setShowClickLogsModal(true);
   };
 
-  const calculateGroupStats = () => {
+  const stats = useMemo(() => {
     if (!groupUrls.length) return { totalClicks: 0, totalUrls: 0, avgClicks: 0 };
     
     const totalClicks = groupUrls.reduce((sum, url) => {
       const clicks = url.noOfClicks || url.clicks || 0;
-      console.log(`URL ${url.name}: clicks = ${clicks} (noOfClicks: ${url.noOfClicks}, clicks: ${url.clicks})`);
       return sum + clicks;
     }, 0);
     const totalUrls = groupUrls.length;
     const avgClicks = totalClicks / totalUrls;
     
-    console.log(`Group stats calculation:`, { totalClicks, totalUrls, avgClicks });
     return { totalClicks, totalUrls, avgClicks: Math.round(avgClicks * 100) / 100 };
-  };
+  }, [groupUrls]);
 
-  const stats = calculateGroupStats();
-
-  if (!isOpen || !group) return null;
+  if (!isOpen || !group || !urls) return null;
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isOpen && (
         <motion.div
+          key="group-details-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -146,13 +139,19 @@ const GroupDetailsModal = ({ isOpen, onClose, group, urls }) => {
                   
                   {groupUrls.length > 0 ? (
                     <div className="space-y-4">
-                      {groupUrls.map((url) => (
-                        <motion.div
-                          key={url._id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
-                        >
+                      {groupUrls.map((url, index) => {
+                        // Ensure we have a stable, unique key
+                        const urlKey = url._id || `url-${index}`;
+                        const urlName = url.name || 'unnamed';
+                        const uniqueKey = `${urlKey}-${urlName}-${index}`;
+                        
+                        return (
+                          <motion.div
+                            key={uniqueKey}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
+                          >
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center mb-2">
@@ -222,7 +221,8 @@ const GroupDetailsModal = ({ isOpen, onClose, group, urls }) => {
                             </div>
                           </div>
                         </motion.div>
-                      ))}
+                      );
+                    })}
                     </div>
                   ) : (
                     <div className="text-center py-8">

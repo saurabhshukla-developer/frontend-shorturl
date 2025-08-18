@@ -6,9 +6,7 @@ class DashboardService {
       const response = await apiClient.get('/api/dashboard');
       return response.data;
     } catch (error) {
-      console.error('Dashboard stats service error:', error);
       const errorMessage = this.handleError(error);
-      console.error('Handled error message:', errorMessage.message);
       throw errorMessage;
     }
   }
@@ -18,9 +16,7 @@ class DashboardService {
       const response = await apiClient.get('/api/dashboard/analytics');
       return response.data;
     } catch (error) {
-      console.error('Dashboard analytics service error:', error);
       const errorMessage = this.handleError(error);
-      console.error('Handled error message:', errorMessage.message);
       throw errorMessage;
     }
   }
