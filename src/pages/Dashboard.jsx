@@ -175,9 +175,7 @@ const Dashboard = () => {
   const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   return (
-    <div className="space-y-8">
-
-
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="text-center lg:text-left">
         <motion.div
@@ -185,36 +183,36 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent mb-4">
+          <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent mb-2">
             Welcome back, {user?.name?.split(' ')[0] || 'there'}! 👋
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto lg:mx-0">
+          <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto lg:mx-0">
             Here's what's happening with your URLs today. Track performance, monitor growth, and optimize your link strategy.
           </p>
         </motion.div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-primary-200 dark:hover:border-primary-700"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-primary-200 dark:hover:border-primary-700"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center">
-            <div className="h-14 w-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-              <LinkIcon className="h-7 w-7 text-white" />
+            <div className="h-10 w-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+              <LinkIcon className="h-5 w-5 text-white" />
             </div>
-            <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total URLs</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="ml-3 flex-1">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total URLs</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats?.overview?.totalUrls || 0}
               </p>
-              <div className="flex items-center mt-2">
-                <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 mr-1" />
-                <span className="text-xs text-green-600 dark:text-green-400">+12% from last month</span>
+              <div className="flex items-center mt-1">
+                <ArrowTrendingUpIcon className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-xs text-green-600 dark:text-green-400">+12%</span>
               </div>
             </div>
           </div>
@@ -224,21 +222,21 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-green-200 dark:hover:border-green-700"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-green-200 dark:hover:border-green-700"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-green-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center">
-            <div className="h-14 w-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-              <EyeIcon className="h-7 w-7 text-white" />
+            <div className="h-10 w-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+              <EyeIcon className="h-5 w-5 text-white" />
             </div>
-            <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Clicks</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="ml-3 flex-1">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Clicks</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats?.overview?.totalClicks || 0}
               </p>
-              <div className="flex items-center mt-2">
-                <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 mr-1" />
-                <span className="text-xs text-green-600 dark:text-green-400">+8% from last month</span>
+              <div className="flex items-center mt-1">
+                <ArrowTrendingUpIcon className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-xs text-green-600 dark:text-green-400">+8%</span>
               </div>
             </div>
           </div>
@@ -248,21 +246,21 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-yellow-200 dark:hover:border-yellow-700"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-yellow-200 dark:hover:border-yellow-700"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-yellow-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center">
-            <div className="h-14 w-14 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-              <UsersIcon className="h-7 w-7 text-white" />
+            <div className="h-10 w-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+              <UsersIcon className="h-5 w-5 text-white" />
             </div>
-            <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active Groups</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="ml-3 flex-1">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Active Groups</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats?.overview?.totalGroups || 0}
               </p>
-              <div className="flex items-center mt-2">
-                <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 mr-1" />
-                <span className="text-xs text-green-600 dark:text-green-400">+5% from last month</span>
+              <div className="flex items-center mt-1">
+                <ArrowTrendingUpIcon className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-xs text-green-600 dark:text-green-400">+5%</span>
               </div>
             </div>
           </div>
@@ -272,21 +270,21 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-purple-200 dark:hover:border-purple-700"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-purple-200 dark:hover:border-purple-700"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center">
-            <div className="h-14 w-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-              <SparklesIcon className="h-7 w-7 text-white" />
+            <div className="h-10 w-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+              <SparklesIcon className="h-5 w-5 text-white" />
             </div>
-            <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Avg. CTR</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="ml-3 flex-1">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Avg. CTR</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats?.overview?.averageCTR ? `${stats.overview.averageCTR.toFixed(1)}%` : '0%'}
               </p>
-              <div className="flex items-center mt-2">
-                <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 mr-1" />
-                <span className="text-xs text-green-600 dark:text-green-400">+2.1% from last month</span>
+              <div className="flex items-center mt-1">
+                <ArrowTrendingUpIcon className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-xs text-green-600 dark:text-green-400">+2.1%</span>
               </div>
             </div>
           </div>
@@ -294,24 +292,24 @@ const Dashboard = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Click Trends Chart */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Clicks by Date</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Clicks by Date</h3>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Last 7 days</span>
                 <div className="h-2 w-2 bg-primary-500 rounded-full"></div>
               </div>
             </div>
-            <div className="h-80">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={analytics?.clicksByDate || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -330,8 +328,8 @@ const Dashboard = () => {
                     dataKey="clicks"
                     stroke="#3b82f6"
                     strokeWidth={3}
-                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }}
-                    activeDot={{ r: 8, stroke: '#3b82f6', strokeWidth: 2 }}
+                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -344,18 +342,18 @@ const Dashboard = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-green-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Group Distribution</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Group Distribution</h3>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400">URL count by group</span>
                 <div className="h-2 w-2 bg-green-500 rounded-full"></div>
               </div>
             </div>
-            <div className="h-80">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={analytics?.groupDistribution || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -369,7 +367,7 @@ const Dashboard = () => {
                       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
                     }}
                   />
-                  <Bar dataKey="count" fill="#10b981" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -377,27 +375,27 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Recent Activity & Quick Actions Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent URLs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Recent URLs</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent URLs</h3>
               <a href="/urls" className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 font-medium hover:underline transition-colors">
                 View all →
               </a>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentUrls.length > 0 ? (
                 recentUrls.map((url, index) => (
-                  <div key={url._id} className="flex items-center justify-between p-4 bg-gray-50/80 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
+                  <div key={url._id} className="flex items-center justify-between p-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-1">
                         {url.name}
@@ -413,19 +411,14 @@ const Dashboard = () => {
                         </span>
                         <p className="text-xs text-gray-500 dark:text-gray-400">clicks</p>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-400 dark:text-gray-500">
-                          {url.lastAccessed ? new Date(url.lastAccessed).toLocaleDateString() : 'Never'}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <LinkIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400">No URLs created yet</p>
-                  <a href="/urls" className="text-primary-600 hover:text-primary-500 dark:text-primary-400 text-sm font-medium hover:underline mt-2 inline-block">
+                <div className="text-center py-6">
+                  <LinkIcon className="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No URLs created yet</p>
+                  <a href="/urls" className="text-primary-600 hover:text-primary-500 dark:text-primary-400 text-xs font-medium hover:underline mt-1 inline-block">
                     Create your first URL →
                   </a>
                 </div>
@@ -439,20 +432,20 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
-          className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
+          className="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-green-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Groups</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Groups</h3>
               <a href="/groups" className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 font-medium hover:underline transition-colors">
                 View all →
               </a>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentGroups.length > 0 ? (
                 recentGroups.map((group, index) => (
-                  <div key={group._id} className="flex items-center justify-between p-4 bg-gray-50/80 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
+                  <div key={group._id} className="flex items-center justify-between p-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-600/50 transition-colors">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-1">
                         {group.name}
@@ -470,10 +463,10 @@ const Dashboard = () => {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <FolderIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400">No groups created yet</p>
-                  <a href="/groups" className="text-primary-600 hover:text-primary-500 dark:text-primary-400 text-sm font-medium hover:underline mt-2 inline-block">
+                <div className="text-center py-6">
+                  <FolderIcon className="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No groups created yet</p>
+                  <a href="/groups" className="text-primary-600 hover:text-primary-500 dark:text-primary-400 text-xs font-medium hover:underline mt-1 inline-block">
                     Create your first group →
                   </a>
                 </div>
@@ -481,57 +474,60 @@ const Dashboard = () => {
             </div>
           </div>
         </motion.div>
-      </div>
 
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-        className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-primary-200/50 dark:border-primary-700/50"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div className="relative text-center">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Ready to get started?</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            Create your first URL, organize them into groups, and start tracking your link performance with our powerful analytics.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <a
-              href="/urls"
-              className="group/action flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-primary-200 dark:hover:border-primary-700 hover:shadow-lg"
-            >
-              <div className="h-12 w-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center mb-4 group-hover/action:scale-110 transition-transform duration-300">
-                <LinkIcon className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-primary-700 dark:text-primary-300 font-semibold text-lg mb-2">Create New URL</span>
-              <span className="text-gray-500 dark:text-gray-400 text-sm">Shorten and track your links</span>
-            </a>
-            
-            <a
-              href="/groups"
-              className="group/action flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/30 transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-green-200 dark:hover:border-green-700 hover:shadow-lg"
-            >
-              <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover/action:scale-110 transition-transform duration-300">
-                <ChartBarIcon className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-green-700 dark:text-green-300 font-semibold text-lg mb-2">Create New Group</span>
-              <span className="text-gray-500 dark:text-gray-400 text-sm">Organize URLs by category</span>
-            </a>
-            
-            <a
-              href="/profile"
-              className="group/action flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-purple-200 dark:hover:border-purple-700 hover:shadow-lg"
-            >
-              <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover/action:scale-110 transition-transform duration-300">
-                <ClockIcon className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-purple-700 dark:text-purple-300 font-semibold text-lg mb-2">View Profile</span>
-              <span className="text-gray-500 dark:text-gray-400 text-sm">Manage your account settings</span>
-            </a>
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+          className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 p-5 shadow-sm hover:shadow-lg transition-all duration-300 border border-primary-200/50 dark:border-primary-700/50"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-primary-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <a
+                href="/urls"
+                className="group/action flex items-center p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-primary-200 dark:hover:border-primary-700"
+              >
+                <div className="h-8 w-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center mr-3 group-hover/action:scale-110 transition-transform duration-300">
+                  <LinkIcon className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <span className="text-primary-700 dark:text-primary-300 font-medium text-sm">Create New URL</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Shorten and track</p>
+                </div>
+              </a>
+              
+              <a
+                href="/groups"
+                className="group/action flex items-center p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-green-200 dark:hover:border-green-700"
+              >
+                <div className="h-8 w-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3 group-hover/action:scale-110 transition-transform duration-300">
+                  <ChartBarIcon className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <span className="text-green-700 dark:text-green-300 font-medium text-sm">Create New Group</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Organize URLs</p>
+                </div>
+              </a>
+              
+              <a
+                href="/profile"
+                className="group/action flex items-center p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all duration-300 border border-gray-200/50 dark:border-gray-700/50 hover:border-purple-200 dark:hover:border-purple-700"
+              >
+                <div className="h-8 w-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 group-hover/action:scale-110 transition-transform duration-300">
+                  <ClockIcon className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <span className="text-purple-700 dark:text-purple-300 font-medium text-sm">View Profile</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Account settings</p>
+                </div>
+              </a>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };
