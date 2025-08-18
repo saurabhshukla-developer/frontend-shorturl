@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { EyeIcon, EyeSlashIcon, LinkIcon } from '@heroicons/react/24/outline';
-import { FcGoogle } from 'react-icons/fc';
+import { useAuth } from '../contexts/AuthContext';
+import { LinkIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
-const Register = () => {
+const GoogleOAuthComplete = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
     contactNumber: '',
     password: '',
     confirmPassword: '',
@@ -18,47 +16,82 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [oauthError, setOauthError] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
+  const [action, setAction] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(true);
 
-  const { register } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { setAuthFromTokens } = useAuth();
 
   useEffect(() => {
-    // Check for OAuth error parameters
-    const error = searchParams.get('error');
-    if (error) {
-      switch (error) {
-        case 'oauth_not_configured':
-          setOauthError('Google OAuth is not configured yet. Please use email/password registration.');
-          break;
-        case 'oauth_failed':
-          setOauthError('Google OAuth authentication failed. Please try again or use email/password registration.');
-          break;
-        case 'google_account_mismatch':
-          setOauthError('This Google account is already linked to another user account.');
-          break;
-        default:
-          setOauthError('An error occurred during authentication. Please try again.');
-      }
+    const actionParam = searchParams.get('action');
+    
+    if (actionParam === 'login') {
+      // Handle login - user already exists
+      handleExistingUserLogin();
+    } else if (actionParam === 'signup') {
+      // Handle signup - new user
+      handleNewUserSignup();
+    } else {
+      // Invalid action, redirect to login
+      navigate('/login');
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
+
+  const handleExistingUserLogin = () => {
+    const accessToken = searchParams.get('accessToken');
+    const refreshToken = searchParams.get('refreshToken');
+    const expiresIn = searchParams.get('expiresIn');
+    const refreshExpiresIn = searchParams.get('refreshExpiresIn');
+    const userId = searchParams.get('userId');
+    const userEmail = searchParams.get('userEmail');
+    const userName = searchParams.get('userName');
+    const userContactNumber = searchParams.get('userContactNumber');
+    const isGoogleUser = searchParams.get('isGoogleUser') === 'true';
+    const emailVerified = searchParams.get('emailVerified') === 'true';
+
+    if (accessToken && refreshToken) {
+      const tokens = {
+        accessToken,
+        refreshToken,
+        expiresIn: parseInt(expiresIn),
+        refreshExpiresIn: parseInt(refreshExpiresIn),
+      };
+
+      const user = {
+        id: userId,
+        name: userName,
+        email: userEmail,
+        contactNumber: userContactNumber,
+        isGoogleUser,
+        emailVerified,
+      };
+
+      setAuthFromTokens(tokens, user);
+      navigate('/dashboard');
+    } else {
+      navigate('/login?error=oauth_failed');
+    }
+  };
+
+  const handleNewUserSignup = () => {
+    const email = searchParams.get('email');
+    const name = searchParams.get('name');
+    const googleId = searchParams.get('googleId');
+    
+    if (email && name && googleId) {
+      setUserInfo({ email, name, googleId });
+      setAction('signup');
+      setIsProcessing(false);
+    } else {
+      navigate('/login');
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.name) {
-      newErrors.name = 'Name is required';
-    } else if (formData.name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    }
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
 
     if (!formData.contactNumber) {
       newErrors.contactNumber = 'Contact number is required';
@@ -84,16 +117,33 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
+    if (!validateForm() || !userInfo) return;
 
     setLoading(true);
     try {
-      const result = await register(formData);
-      if (result.success) {
-        navigate('/login');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/auth/google-oauth-complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userInfo.email,
+          name: userInfo.name,
+          googleId: userInfo.googleId,
+          contactNumber: formData.contactNumber,
+          password: formData.password,
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.tokens && result.user) {
+        setAuthFromTokens(result.tokens, result.user);
+        navigate('/dashboard');
+      } else {
+        setErrors({ general: result.message || 'Something went wrong' });
       }
     } catch (error) {
+      setErrors({ general: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -101,28 +151,28 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user starts typing
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handleGoogleSignup = () => {
-    // Clear any existing OAuth errors
-    setOauthError('');
-    
-    // Redirect to backend Google OAuth endpoint
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    window.location.href = `${apiUrl}/api/auth/google`;
-  };
+  // Show loading while processing OAuth response
+  if (isProcessing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600 dark:text-gray-400">Processing Google OAuth...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show signup form for new users
+  if (action !== 'signup' || !userInfo) {
+    return null;
+  }
 
   return (
     <div className={`min-h-screen ${isDark ? 'dark' : ''}`}>
@@ -149,115 +199,34 @@ const Register = () => {
               </span>
             </Link>
             <h2 className="mt-8 text-4xl font-bold text-gray-900 dark:text-white">
-              Create your account
+              Complete Your Profile
             </h2>
             <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-              Start shortening URLs and tracking analytics
+              Add your contact number and set a password
             </p>
+            
+            {/* User Info Display */}
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <span className="font-semibold">Name:</span> {userInfo.name}
+              </p>
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <span className="font-semibold">Email:</span> {userInfo.email}
+              </p>
+            </div>
           </motion.div>
 
-          {/* Form */}
+          {/* Signup Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
             className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/30 p-8"
           >
-            {/* OAuth Error Message */}
-            {oauthError && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-              >
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  {oauthError}
-                </p>
-              </motion.div>
-            )}
-
-            {/* Google Signup Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleGoogleSignup}
-              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium py-3 px-4 rounded-xl border-2 border-gray-200 dark:border-gray-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm hover:shadow-md"
-            >
-              <FcGoogle className="h-5 w-5" />
-              Continue with Google
-            </motion.button>
-
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white/70 dark:bg-gray-800/70 text-gray-500 dark:text-gray-400">
-                  Or continue with email
-                </span>
-              </div>
-            </div>
-
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
+              Create New Account
+            </h3>
             <form className="space-y-6" onSubmit={handleSubmit}>
-              {/* Name Field */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 ${
-                    errors.name ? 'border-red-300 focus:ring-red-500' : 'hover:border-gray-300 dark:hover:border-gray-500'
-                  }`}
-                  placeholder="Enter your full name"
-                />
-                {errors.name && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 text-sm text-red-600 dark:text-red-400"
-                  >
-                    {errors.name}
-                  </motion.p>
-                )}
-              </div>
-
-              {/* Email Field */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 ${
-                    errors.email ? 'border-red-300 focus:ring-red-500' : 'hover:border-gray-300 dark:hover:border-gray-500'
-                  }`}
-                  placeholder="Enter your email"
-                />
-                {errors.email && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 text-sm text-red-600 dark:text-red-400"
-                  >
-                    {errors.email}
-                  </motion.p>
-                )}
-              </div>
-
               {/* Contact Number Field */}
               <div>
                 <label htmlFor="contactNumber" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -271,7 +240,7 @@ const Register = () => {
                   required
                   value={formData.contactNumber}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 ${
+                  className={`w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-400 ${
                     errors.contactNumber ? 'border-red-300 focus:ring-red-500' : 'hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                   placeholder="Enter your contact number"
@@ -301,7 +270,7 @@ const Register = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 ${
+                    className={`w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-400 ${
                       errors.password ? 'border-red-300 focus:ring-red-500' : 'hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                     placeholder="Create a password"
@@ -343,7 +312,7 @@ const Register = () => {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 ${
+                    className={`w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-400 ${
                       errors.confirmPassword ? 'border-red-300 focus:ring-red-500' : 'hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                     placeholder="Confirm your password"
@@ -371,6 +340,19 @@ const Register = () => {
                 )}
               </div>
 
+              {/* General Error */}
+              {errors.general && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+                >
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.general}
+                  </p>
+                </motion.div>
+              )}
+
               {/* Submit Button */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -386,13 +368,13 @@ const Register = () => {
                     className="h-5 w-5 border-2 border-white border-t-transparent rounded-full mx-auto"
                   />
                 ) : (
-                  'Create Account'
+                  'Complete Registration'
                 )}
               </motion.button>
             </form>
           </motion.div>
 
-          {/* Sign In Link */}
+          {/* Back to Login Link */}
           <motion.div 
             className="text-center"
             initial={{ opacity: 0 }}
@@ -415,4 +397,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default GoogleOAuthComplete;

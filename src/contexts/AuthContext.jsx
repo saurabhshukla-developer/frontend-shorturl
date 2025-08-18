@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       try {
         if (token) {
-          // Verify token and get user profile
           const userProfile = await authService.getProfile();
           setUser(userProfile);
           setIsAuthenticated(true);
@@ -31,7 +30,6 @@ export const AuthProvider = ({ children }) => {
           setLoading(false);
         }
       } catch (error) {
-        // Clear invalid tokens
         logout();
       } finally {
         setLoading(false);
@@ -39,22 +37,22 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []); // Remove token dependency to prevent infinite loops
+  }, []);
+
+  const setAuthFromTokens = (tokens, userData) => {
+    setToken(tokens.accessToken);
+    setRefreshToken(tokens.refreshToken);
+    setUser(userData);
+    setIsAuthenticated(true);
+    localStorage.setItem('token', tokens.accessToken);
+    localStorage.setItem('refreshToken', tokens.refreshToken);
+  };
 
   const login = async (credentials) => {
     try {
       const response = await authService.login(credentials);
-      
       const { tokens, user: userData } = response;
-      
-      setToken(tokens.accessToken);
-      setRefreshToken(tokens.refreshToken);
-      setUser(userData);
-      setIsAuthenticated(true);
-      
-      localStorage.setItem('token', tokens.accessToken);
-      localStorage.setItem('refreshToken', tokens.refreshToken);
-      
+      setAuthFromTokens(tokens, userData);
       toast.success('Login successful!');
       return { success: true };
     } catch (error) {
@@ -65,7 +63,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await authService.register(userData);
+      await authService.register(userData);
       toast.success('Registration successful! Please login.');
       return { success: true };
     } catch (error) {
@@ -81,8 +79,6 @@ export const AuthProvider = ({ children }) => {
     setRefreshToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    
-    // Call logout API
     if (token) {
       authService.logout().catch(() => {});
     }
@@ -138,15 +134,9 @@ export const AuthProvider = ({ children }) => {
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
-      
       const response = await authService.refreshToken(refreshToken);
       const { tokens } = response;
-      
-      setToken(tokens.accessToken);
-      setRefreshToken(tokens.refreshToken);
-      localStorage.setItem('token', tokens.accessToken);
-      localStorage.setItem('refreshToken', tokens.refreshToken);
-      
+      setAuthFromTokens(tokens, user);
       return tokens.accessToken;
     } catch (error) {
       logout();
@@ -167,6 +157,7 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     resetPassword,
     refreshAuthToken,
+    setAuthFromTokens,
   };
 
   return (

@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import GoogleOAuthComplete from './pages/GoogleOAuthComplete';
 import Dashboard from './pages/Dashboard';
 import URLs from './pages/URLs';
 import Groups from './pages/Groups';
@@ -95,6 +96,8 @@ function App() {
                   <Register />
                 </PublicRoute>
               } />
+              {/* Allow this page even when authenticated, so users can complete linking */}
+              <Route path="/google-oauth-complete" element={<GoogleOAuthComplete />} />
               <Route path="/forgot-password" element={
                 <PublicRoute>
                   <ForgotPassword />

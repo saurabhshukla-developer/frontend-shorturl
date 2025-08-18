@@ -45,4 +45,104 @@
   .group-badge:hover {
     @apply bg-primary-50 dark:bg-primary-900/20;
   }
+
+  /* Modern form styles */
+  .form-input {
+    @apply w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 hover:border-gray-300 dark:hover:border-gray-500;
+  }
+
+  .form-input-error {
+    @apply border-red-300 focus:ring-red-500;
+  }
+
+  .form-label {
+    @apply block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2;
+  }
+
+  .form-error {
+    @apply mt-2 text-sm text-red-600 dark:text-red-400;
+  }
+
+  /* Modern button styles */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl;
+  }
+
+  .btn-google {
+    @apply w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium py-3 px-4 rounded-xl border-2 border-gray-200 dark:border-gray-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm hover:shadow-md;
+  }
+
+  /* Glass morphism effects */
+  .glass-card {
+    @apply bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/30;
+  }
+
+  .glass-input {
+    @apply bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm;
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    @apply animate-[fadeIn_0.6s_ease-out];
+  }
+
+  .animate-slide-up {
+    @apply animate-[slideUp_0.6s_ease-out];
+  }
+
+  .animate-scale-in {
+    @apply animate-[scaleIn_0.3s_ease-out];
+  }
+}
+
+@layer utilities {
+  /* Custom animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Gradient text utilities */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent;
+  }
+
+  /* Backdrop blur utilities */
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+  }
+
+  .backdrop-blur-lg {
+    backdrop-filter: blur(16px);
+  }
 }
