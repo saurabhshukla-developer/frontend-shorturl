@@ -4,6 +4,7 @@ import { urlService } from '../services/urlService';
 import { groupService } from '../services/groupService';
 import toast from 'react-hot-toast';
 import ClickLogsModal from '../components/ClickLogsModal';
+import GroupDetailsModal from '../components/GroupDetailsModal';
 import {
   PlusIcon,
   PencilIcon,
@@ -28,7 +29,9 @@ const URLs = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showClickLogsModal, setShowClickLogsModal] = useState(false);
+  const [showGroupDetailsModal, setShowGroupDetailsModal] = useState(false);
   const [selectedUrl, setSelectedUrl] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -174,6 +177,11 @@ const URLs = () => {
     console.log('URLs - Modal state set to true');
   };
 
+  const openGroupDetailsModal = (group) => {
+    setSelectedGroup(group);
+    setShowGroupDetailsModal(true);
+  };
+
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -203,7 +211,7 @@ const URLs = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">URLs</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your shortened URLs and track their performance.</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your shortened URLs and track their performance. Click on group badges to view group analytics.</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -249,10 +257,17 @@ const URLs = () => {
                     </p>
                     {/* Group Badge */}
                     {url.groupId && (
-                      <div className="flex items-center mt-2">
-                        <UserGroupIcon className="h-3 w-3 text-gray-400 mr-1" />
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <div 
+                        className="flex items-center mt-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded-lg transition-all duration-200 group-badge"
+                        onClick={() => openGroupDetailsModal(url.groupId)}
+                        title="Click to view group details and analytics"
+                      >
+                        <UserGroupIcon className="h-3 w-3 text-gray-400 mr-1 group-hover:text-primary-500 transition-colors" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                           {url.groupId.name || 'Group'}
+                        </span>
+                        <span className="text-xs text-primary-400 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          →
                         </span>
                       </div>
                     )}
@@ -658,6 +673,14 @@ const URLs = () => {
         onClose={() => setShowClickLogsModal(false)}
         urlId={selectedUrl?._id}
         urlName={selectedUrl?.name}
+      />
+
+      {/* Group Details Modal */}
+      <GroupDetailsModal
+        isOpen={showGroupDetailsModal}
+        onClose={() => setShowGroupDetailsModal(false)}
+        group={selectedGroup}
+        urls={urls}
       />
     </div>
   );

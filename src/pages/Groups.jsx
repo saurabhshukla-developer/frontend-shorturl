@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { groupService } from '../services/groupService';
 import { urlService } from '../services/urlService';
 import toast from 'react-hot-toast';
+import GroupDetailsModal from '../components/GroupDetailsModal';
 import {
   PlusIcon,
   PencilIcon,
@@ -10,6 +11,7 @@ import {
   FolderIcon,
   LinkIcon,
   MagnifyingGlassIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 
 const Groups = () => {
@@ -21,6 +23,7 @@ const Groups = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showGroupDetailsModal, setShowGroupDetailsModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
   });
@@ -101,9 +104,17 @@ const Groups = () => {
     setShowDeleteModal(true);
   };
 
+  const openGroupDetailsModal = (group) => {
+    setSelectedGroup(group);
+    setShowGroupDetailsModal(true);
+  };
+
   const getGroupStats = (groupId) => {
-    const groupUrls = urls.filter(url => url.groupId === groupId);
-    const totalClicks = groupUrls.reduce((sum, url) => sum + (url.clicks || 0), 0);
+    const groupUrls = urls.filter(url => 
+      url.groupId?._id === groupId || url.groupId === groupId
+    );
+    console.log(`Group ${groupId} stats:`, { groupUrls, totalUrls: urls.length });
+    const totalClicks = groupUrls.reduce((sum, url) => sum + (url.noOfClicks || url.clicks || 0), 0);
     return {
       urlCount: groupUrls.length,
       totalClicks,
@@ -128,7 +139,7 @@ const Groups = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Groups</h1>
-          <p className="text-gray-600 dark:text-gray-400">Organize your URLs into groups for better management.</p>
+          <p className="text-gray-600 dark:text-gray-400">Organize your URLs into groups for better management. Click the eye icon to view detailed analytics for each group.</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -181,6 +192,13 @@ const Groups = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
+                      onClick={() => openGroupDetailsModal(group)}
+                      className="text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors"
+                      title="View group details"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={() => openEditModal(group)}
                       className="text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
                       title="Edit group"
@@ -219,7 +237,7 @@ const Groups = () => {
                     </h4>
                     <div className="space-y-2">
                       {urls
-                        .filter(url => url.groupId === group._id)
+                        .filter(url => url.groupId?._id === group._id || url.groupId === group._id)
                         .slice(0, 3)
                         .map((url) => (
                           <div key={url._id} className="flex items-center justify-between text-sm">
@@ -230,7 +248,7 @@ const Groups = () => {
                               </span>
                             </div>
                             <span className="text-gray-500 dark:text-gray-500">
-                              {url.clicks || 0} clicks
+                              {url.noOfClicks || url.clicks || 0} clicks
                             </span>
                           </div>
                         ))}
@@ -413,6 +431,14 @@ const Groups = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Group Details Modal */}
+      <GroupDetailsModal
+        isOpen={showGroupDetailsModal}
+        onClose={() => setShowGroupDetailsModal(false)}
+        group={selectedGroup}
+        urls={urls}
+      />
     </div>
   );
 };
