@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { urlService } from '../services/urlService';
+import { groupService } from '../services/groupService';
 import toast from 'react-hot-toast';
 import ClickLogsModal from '../components/ClickLogsModal';
 import {
@@ -13,10 +14,15 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
   ChartBarIcon,
+  CalendarIcon,
+  ClockIcon,
+  GlobeAltIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 const URLs = () => {
   const [urls, setUrls] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -28,6 +34,7 @@ const URLs = () => {
     name: '',
     originalUrl: '',
     shortUrl: '',
+    groupId: '',
   });
 
   // Debug logging for modal state
@@ -49,6 +56,7 @@ const URLs = () => {
 
   useEffect(() => {
     fetchData();
+    fetchGroups();
   }, []);
 
   const fetchData = async () => {
@@ -68,6 +76,16 @@ const URLs = () => {
       setUrls([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const groupsResult = await groupService.getGroups();
+      setGroups(groupsResult || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      setGroups([]);
     }
   };
 
@@ -128,6 +146,7 @@ const URLs = () => {
       name: '',
       originalUrl: '',
       shortUrl: '',
+      groupId: '',
     });
   };
 
@@ -138,6 +157,7 @@ const URLs = () => {
       name: url.name || '',
       originalUrl: url.originalUrl || '',
       shortUrl: url.shortUrl || '',
+      groupId: url.groupId?._id || url.groupId || '',
     });
     setShowEditModal(true);
   };
@@ -182,135 +202,176 @@ const URLs = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">URLs</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage your shortened URLs and track their performance.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">URLs</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your shortened URLs and track their performance.</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="btn-primary flex items-center mt-4 sm:mt-0"
+          className="btn-primary flex items-center mt-4 sm:mt-0 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Create New URL
         </button>
       </div>
 
-      {/* Filters and Search */}
-      <div className="card">
-                <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search URLs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field pl-10"
-              />
-            </div>
-          </div>
-        </div>
+      {/* Search Bar */}
+      <div className="relative">
+        <MagnifyingGlassIcon className="h-5 w-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search URLs by name or original URL..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+        />
       </div>
 
-      {/* URLs List */}
-      <div className="card">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  URL Details
-                </th>
-
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Clicks
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-              {(filteredUrls || []).length > 0 ? (
-                (filteredUrls || []).map((url) => (
-                  <motion.tr
-                    key={url._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                          <LinkIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {url.name || 'Unnamed URL'}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                            {url.originalUrl || 'No URL'}
-                          </div>
-                          <div className="text-xs text-primary-600 dark:text-primary-400 font-mono">
-                            {url.shortUrl ? `${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}` : 'No short URL'}
-                          </div>
-                        </div>
+      {/* URLs Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {(filteredUrls || []).length > 0 ? (
+          (filteredUrls || []).map((url) => (
+            <motion.div
+              key={url._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:-translate-y-1"
+            >
+              {/* URL Header */}
+              <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                      {url.name || 'Unnamed URL'}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
+                      {url.originalUrl || 'No URL'}
+                    </p>
+                    {/* Group Badge */}
+                    {url.groupId && (
+                      <div className="flex items-center mt-2">
+                        <UserGroupIcon className="h-3 w-3 text-gray-400 mr-1" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {url.groupId.name || 'Group'}
+                        </span>
                       </div>
-                    </td>
+                    )}
+                  </div>
+                  <div className="ml-3 flex-shrink-0">
+                    <div className="h-10 w-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <LinkIcon className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {url.noOfClicks || url.clicks || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {url.createdAt ? new Date(url.createdAt).toLocaleDateString() : 'Unknown'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => url.shortUrl ? copyToClipboard(`${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}`) : toast.error('No short URL available')}
-                          className="text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
-                          title="Copy short URL"
-                        >
-                          <ClipboardIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => openClickLogsModal(url)}
-                          className="text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors"
-                          title="View Click Analytics"
-                        >
-                          <ChartBarIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => openEditModal(url)}
-                          className="text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
-                          title="Edit URL"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(url)}
-                          className="text-red-400 hover:text-red-500 dark:hover:text-red-300 transition-colors"
-                          title="Delete URL"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                    {searchTerm ? 'No URLs match your search' : 'No URLs created yet'}
-                  </td>
-                </tr>
+              {/* URL Content */}
+              <div className="p-6 space-y-4">
+                {/* Short URL */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Short URL</p>
+                      <p className="text-sm font-mono text-primary-600 dark:text-primary-400 truncate">
+                        {url.shortUrl ? `${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}` : 'No short URL'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => url.shortUrl ? copyToClipboard(`${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}`) : toast.error('No short URL available')}
+                      className="ml-2 p-2 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all duration-200"
+                      title="Copy short URL"
+                    >
+                      <ClipboardIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Stats Row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <EyeIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {url.noOfClicks || url.clicks || 0} clicks
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CalendarIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {url.createdAt ? new Date(url.createdAt).toLocaleDateString() : 'Unknown'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => openClickLogsModal(url)}
+                      className="p-2 text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200"
+                      title="View Analytics"
+                    >
+                      <ChartBarIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => openEditModal(url)}
+                      className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                      title="Edit URL"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(url)}
+                      className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                      title="Delete URL"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  
+                  {/* Visit Button */}
+                  {url.shortUrl && (
+                    <a
+                      href={`${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-all duration-200"
+                    >
+                      <GlobeAltIcon className="h-3 w-3 mr-1" />
+                      Visit
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <div className="col-span-full">
+            <div className="text-center py-12">
+              <div className="mx-auto h-24 w-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                <LinkIcon className="h-12 w-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                {searchTerm ? 'No URLs found' : 'No URLs created yet'}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first shortened URL'}
+              </p>
+              {!searchTerm && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn-primary inline-flex items-center"
+                >
+                  <PlusIcon className="h-5 w-5 mr-2" />
+                  Create Your First URL
+                </button>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create URL Modal */}
@@ -325,12 +386,20 @@ const URLs = () => {
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
               <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowCreateModal(false)} />
               
-              <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form onSubmit={handleCreate}>
-                  <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Create New URL</h3>
+                  <div className="px-6 pt-6 pb-4">
+                    <div className="flex items-center mb-6">
+                      <div className="h-12 w-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center mr-4">
+                        <PlusIcon className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Create New URL</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Add a new shortened URL to your collection</p>
+                      </div>
+                    </div>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           URL Name <span className="text-red-500">*</span>
@@ -361,7 +430,7 @@ const URLs = () => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Desired Short URL (Optional)
+                          Custom Short URL (Optional)
                         </label>
                         <input
                           type="text"
@@ -370,17 +439,38 @@ const URLs = () => {
                           className="input-field"
                           placeholder="Leave empty for auto-generation"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Only letters, numbers, hyphens, and underscores (3-50 characters)
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Group (Optional)
+                        </label>
+                        <select
+                          value={formData.groupId}
+                          onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
+                          className="input-field"
+                        >
+                          <option value="">No Group</option>
+                          {groups.map((group) => (
+                            <option key={group._id} value={group._id}>
+                              {group.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Organize your URLs by grouping them together
                         </p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 sm:flex sm:flex-row-reverse">
                     <button
                       type="submit"
-                      className="btn-primary w-full sm:w-auto sm:ml-3"
+                      className="btn-primary w-full sm:w-auto sm:ml-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
                     >
                       Create URL
                     </button>
@@ -411,12 +501,20 @@ const URLs = () => {
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
               <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowEditModal(false)} />
               
-              <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <form onSubmit={handleEdit}>
-                  <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Edit URL</h3>
+                  <div className="px-6 pt-6 pb-4">
+                    <div className="flex items-center mb-6">
+                      <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                        <PencilIcon className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Edit URL</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Update your shortened URL details</p>
+                      </div>
+                    </div>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           URL Name <span className="text-red-500">*</span>
@@ -447,7 +545,7 @@ const URLs = () => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Desired Short URL (Optional)
+                          Custom Short URL (Optional)
                         </label>
                         <input
                           type="text"
@@ -456,17 +554,38 @@ const URLs = () => {
                           className="input-field"
                           placeholder="Leave empty for auto-generation"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Only letters, numbers, hyphens, and underscores (3-50 characters)
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Group (Optional)
+                        </label>
+                        <select
+                          value={formData.groupId}
+                          onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
+                          className="input-field"
+                        >
+                          <option value="">No Group</option>
+                          {groups.map((group) => (
+                            <option key={group._id} value={group._id}>
+                              {group.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Organize your URLs by grouping them together
                         </p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 sm:flex sm:flex-row-reverse">
                     <button
                       type="submit"
-                      className="btn-primary w-full sm:w-auto sm:ml-3"
+                      className="btn-primary w-full sm:w-auto sm:ml-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
                     >
                       Update URL
                     </button>
@@ -497,20 +616,28 @@ const URLs = () => {
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
               <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowDeleteModal(false)} />
               
-              <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Delete URL</h3>
+              <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div className="px-6 pt-6 pb-4">
+                  <div className="flex items-center mb-6">
+                    <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+                      <TrashIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Delete URL</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
+                    </div>
+                  </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Are you sure you want to delete "{selectedUrl?.name || 'this URL'}"? This action cannot be undone.
+                    Are you sure you want to delete "<span className="font-medium text-gray-900 dark:text-white">{selectedUrl?.name || 'this URL'}</span>"? This action cannot be undone.
                   </p>
                 </div>
                 
-                <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 sm:flex sm:flex-row-reverse">
                   <button
                     onClick={handleDelete}
-                    className="btn-danger w-full sm:w-auto sm:ml-3"
+                    className="btn-danger w-full sm:w-auto sm:ml-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
                   >
-                    Delete
+                    Delete URL
                   </button>
                   <button
                     onClick={() => setShowDeleteModal(false)}
