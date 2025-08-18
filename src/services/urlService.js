@@ -63,6 +63,21 @@ class URLService {
     }
   }
 
+  async getUrlClickLogs(id, params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.startDate) queryParams.append('startDate', params.startDate);
+      if (params.endDate) queryParams.append('endDate', params.endDate);
+
+      const response = await apiClient.get(`/api/urls/${id}/click-logs?${queryParams}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   async bulkUpdateUrls(urlIds, updateData) {
     try {
       const response = await apiClient.put('/api/urls/bulk', {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { urlService } from '../services/urlService';
 import toast from 'react-hot-toast';
+import ClickLogsModal from '../components/ClickLogsModal';
 import {
   PlusIcon,
   PencilIcon,
@@ -11,6 +12,7 @@ import {
   ClipboardIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 const URLs = () => {
@@ -19,6 +21,7 @@ const URLs = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showClickLogsModal, setShowClickLogsModal] = useState(false);
   const [selectedUrl, setSelectedUrl] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
@@ -26,6 +29,23 @@ const URLs = () => {
     originalUrl: '',
     shortUrl: '',
   });
+
+  // Debug logging for modal state
+  useEffect(() => {
+    console.log('URLs - showClickLogsModal changed:', showClickLogsModal);
+    console.log('URLs - Stack trace:', new Error().stack);
+  }, [showClickLogsModal]);
+
+  useEffect(() => {
+    console.log('URLs - selectedUrl changed:', selectedUrl);
+  }, [selectedUrl]);
+
+  // Prevent modal from closing unexpectedly
+  useEffect(() => {
+    if (showClickLogsModal && selectedUrl) {
+      console.log('URLs - Modal should be open, ensuring it stays open');
+    }
+  }, [showClickLogsModal, selectedUrl]);
 
   useEffect(() => {
     fetchData();
@@ -125,6 +145,13 @@ const URLs = () => {
   const openDeleteModal = (url) => {
     setSelectedUrl(url);
     setShowDeleteModal(true);
+  };
+
+  const openClickLogsModal = (url) => {
+    console.log('URLs - Opening click logs modal for URL:', url);
+    setSelectedUrl(url);
+    setShowClickLogsModal(true);
+    console.log('URLs - Modal state set to true');
   };
 
   const copyToClipboard = async (text) => {
@@ -248,6 +275,13 @@ const URLs = () => {
                           title="Copy short URL"
                         >
                           <ClipboardIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => openClickLogsModal(url)}
+                          className="text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors"
+                          title="View Click Analytics"
+                        >
+                          <ChartBarIcon className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => openEditModal(url)}
@@ -490,6 +524,14 @@ const URLs = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Click Logs Modal */}
+      <ClickLogsModal
+        isOpen={showClickLogsModal}
+        onClose={() => setShowClickLogsModal(false)}
+        urlId={selectedUrl?._id}
+        urlName={selectedUrl?.name}
+      />
     </div>
   );
 };
