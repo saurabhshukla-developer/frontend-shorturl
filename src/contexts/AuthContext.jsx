@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       toast.success('Login successful!');
       return { success: true };
     } catch (error) {
-      toast.error(error.message || 'Login failed');
+      // Remove error toast - errors will be shown in the form
       return { success: false, error: error.message };
     }
   };
@@ -67,8 +67,8 @@ export const AuthProvider = ({ children }) => {
       toast.success('Registration successful! Please login.');
       return { success: true };
     } catch (error) {
-      toast.error(error.message || 'Registration failed');
-      return { success: false, error: error.message };
+      // Return the full error object so field-specific errors can be handled
+      return { success: false, error };
     }
   };
 

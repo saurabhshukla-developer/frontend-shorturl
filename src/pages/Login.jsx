@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { EyeIcon, EyeSlashIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { FcGoogle } from 'react-icons/fc';
+import { processError, categorizeErrorsForDisplay } from '../utils/errorHandler.js';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +16,6 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [oauthError, setOauthError] = useState('');
 
   const { login } = useAuth();
   const { isDark } = useTheme();
@@ -22,30 +23,12 @@ const Login = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Check for OAuth error parameters
-    const error = searchParams.get('error');
+    // Check for message parameters
     const message = searchParams.get('message');
     const email = searchParams.get('email');
     
-    if (error) {
-      switch (error) {
-        case 'oauth_not_configured':
-          setOauthError('Google OAuth is not configured yet. Please use email/password login.');
-          break;
-        case 'oauth_failed':
-          setOauthError('Google OAuth authentication failed. Please try again or use email/password login.');
-          break;
-        case 'google_account_mismatch':
-          setOauthError('This Google account is already linked to another user account.');
-          break;
-        default:
-          setOauthError('An error occurred during authentication. Please try again.');
-      }
-    }
-    
     // Check for message parameters
     if (message === 'user_exists_with_email' && email) {
-      setOauthError(`An account with email ${email} already exists. Please sign in with your password.`);
       // Pre-fill the email field
       setFormData(prev => ({ ...prev, email }));
     }
@@ -56,14 +39,12 @@ const Login = () => {
 
     if (!formData.email) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+    } else if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
@@ -76,19 +57,36 @@ const Login = () => {
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({}); // Clear previous errors
+    
     try {
       const result = await login(formData);
-      console.log('Login result:', result); // Debug log
       
       if (result.success) {
         navigate('/dashboard');
       } else {
-        // Handle login failure
+        // Handle login failure - show as general error
         setErrors({ general: result.error || 'Login failed. Please try again.' });
       }
     } catch (error) {
-      console.error('Login error:', error); // Debug log
-      setErrors({ general: error.message || 'An unexpected error occurred.' });
+      // Handle specific backend errors by mapping them to appropriate fields
+      const processedError = processError(error);
+      const { fieldErrors, generalError } = categorizeErrorsForDisplay(processedError);
+      
+      // Set field-specific errors
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(prev => ({ ...prev, ...fieldErrors }));
+      }
+      
+      // Set general error if any
+      if (generalError) {
+        setErrors(prev => ({ ...prev, general: generalError }));
+      }
+      
+      // If no errors were set, show the original error message as general error
+      if (Object.keys(fieldErrors).length === 0 && !generalError) {
+        setErrors({ general: error.message || 'Login failed. Please try again.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -108,12 +106,48 @@ const Login = () => {
         [name]: ''
       }));
     }
+    
+    // Clear general error when user starts typing
+    if (errors.general) {
+      setErrors(prev => ({
+        ...prev,
+        general: ''
+      }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    
+    // Validate specific field on blur
+    let fieldError = '';
+    
+    switch (name) {
+      case 'email':
+        if (!value) {
+          fieldError = 'Email is required';
+        } else if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
+          fieldError = 'Please enter a valid email address';
+        }
+        break;
+      case 'password':
+        if (!value) {
+          fieldError = 'Password is required';
+        }
+        break;
+      default:
+        break;
+    }
+    
+    if (fieldError) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: fieldError
+      }));
+    }
   };
 
   const handleGoogleLogin = () => {
-    // Clear any existing OAuth errors
-    setOauthError('');
-    
     // Redirect to backend Google OAuth endpoint
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
     window.location.href = `${apiUrl}/api/auth/google`;
@@ -158,18 +192,7 @@ const Login = () => {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/30 p-8"
           >
-            {/* OAuth Error Message */}
-            {oauthError && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-              >
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  {oauthError}
-                </p>
-              </motion.div>
-            )}
+
 
             {/* Google Login Button */}
             <motion.button
@@ -209,6 +232,7 @@ const Login = () => {
                     required
                     value={formData.email}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     className={`w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 ${
                       errors.email ? 'border-red-300 focus:ring-red-500' : 'hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
@@ -240,6 +264,7 @@ const Login = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     className={`w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm placeholder-gray-400 dark:placeholder-gray-500 ${
                       errors.password ? 'border-red-300 focus:ring-red-500' : 'hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
@@ -278,17 +303,12 @@ const Login = () => {
                 </Link>
               </div>
 
-              {/* General Error */}
+              {/* Common Form Error */}
               {errors.general && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
-                >
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    {errors.general}
-                  </p>
-                </motion.div>
+                <ErrorDisplay
+                  error={{ message: errors.general }}
+                  showRetry={false}
+                />
               )}
 
               {/* Submit Button */}

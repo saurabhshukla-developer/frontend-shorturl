@@ -84,14 +84,64 @@ class AuthService {
   handleError(error) {
     if (error.response) {
       // Server responded with error status
-      const message = error.response.data?.message || 'An error occurred';
-      return new Error(message);
+      const { data, status } = error.response;
+      
+      // Handle standardized error responses
+      if (data?.error) {
+        const { type, message, details } = data.error;
+        
+        // Create a structured error object
+        const structuredError = {
+          type,
+          message,
+          details,
+          statusCode: status,
+          isFieldError: type === 'VALIDATION_ERROR' && details?.fields,
+          fieldErrors: type === 'VALIDATION_ERROR' ? (details?.fields || []) : 
+                      type === 'CONFLICT_ERROR' && details?.field ? [{ field: details.field, message }] : []
+        };
+        
+        // For CONFLICT_ERROR, ensure we have the field information for display
+        if (type === 'CONFLICT_ERROR' && details?.field) {
+          structuredError.isFieldError = true;
+          structuredError.fieldErrors = [{ field: details.field, message }];
+        }
+        
+        return structuredError;
+      }
+      
+      // Handle legacy error format (fallback)
+      if (data?.message) {
+        return new Error(data.message);
+      }
+      
+      // Handle status-specific errors
+      switch (status) {
+        case 400:
+          return new Error('Bad request');
+        case 401:
+          return new Error('Unauthorized');
+        case 403:
+          return new Error('Access denied');
+        case 404:
+          return new Error('Resource not found');
+        case 409:
+          return new Error('Conflict occurred');
+        case 422:
+          return new Error('Validation failed');
+        case 429:
+          return new Error('Too many requests. Please try again later.');
+        case 500:
+          return new Error('Internal server error. Please try again later.');
+        default:
+          return new Error('An error occurred');
+      }
     } else if (error.request) {
       // Request made but no response received
       return new Error('Network error. Please check your connection.');
     } else {
       // Something else happened
-      return new Error('An unexpected error occurred.');
+      return new Error(error.message || 'An unexpected error occurred.');
     }
   }
 }

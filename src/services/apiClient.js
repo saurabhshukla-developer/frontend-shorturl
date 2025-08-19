@@ -39,7 +39,7 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle token refresh and retries
 apiClient.interceptors.response.use(
   (response) => {
     return response;
@@ -47,7 +47,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-        // If error is 401 and we haven't tried to refresh token yet
+    // If error is 401 and we haven't tried to refresh token yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
@@ -116,5 +116,36 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Add retry mechanism for failed requests
+export const retryRequest = async (requestFn, maxRetries = 3, delay = 1000) => {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = error;
+      
+      // Don't retry on certain error types
+      if (error.response?.status === 400 || 
+          error.response?.status === 401 || 
+          error.response?.status === 403 || 
+          error.response?.status === 404) {
+        break;
+      }
+      
+      // If this is the last attempt, don't wait
+      if (attempt === maxRetries) {
+        break;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt - 1)));
+    }
+  }
+  
+  throw lastError;
+};
 
 export { apiClient };
