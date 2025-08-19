@@ -8,7 +8,9 @@ import {
   ClockIcon,
   GlobeAmericasIcon,
   BuildingOfficeIcon,
-  WifiIcon
+  WifiIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { urlService } from '../services/urlService';
 import toast from 'react-hot-toast';
@@ -24,9 +26,29 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
   const [topOperatingSystems, setTopOperatingSystems] = useState([]);
   const [topISPs, setTopISPs] = useState([]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8);
+
   // Use ref to track if modal should be open
   const shouldBeOpen = useRef(isOpen);
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(clickLogs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentClickLogs = clickLogs.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to first page when modal opens or URL changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [urlId]);
 
   useEffect(() => {
     shouldBeOpen.current = isOpen;
@@ -181,11 +203,38 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
     return '💻';
   };
 
+  // Get consistent colors for countries
+  const getConsistentColor = (countryName, index) => {
+    if (countryName === 'Unknown') return '#94a3b8';
+    
+    // Predefined color palette for consistent colors
+    const colors = [
+      '#3b82f6', // Blue
+      '#ef4444', // Red
+      '#10b981', // Green
+      '#f59e0b', // Amber
+      '#8b5cf6', // Violet
+      '#06b6d4', // Cyan
+      '#f97316', // Orange
+      '#84cc16', // Lime
+      '#ec4899', // Pink
+      '#6366f1'  // Indigo
+    ];
+    
+    // Use hash of country name to get consistent color
+    let hash = 0;
+    for (let i = 0; i < countryName.length; i++) {
+      hash = countryName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash) % colors.length;
+    return colors[colorIndex];
+  };
+
   // Prepare chart data
-  const countryChartData = topCountries.length > 0 ? topCountries.map(country => ({
+  const countryChartData = topCountries.length > 0 ? topCountries.map((country, index) => ({
     name: country._id === 'Unknown' ? 'Unknown' : country._id,
     value: country.count,
-    fill: `hsl(${Math.random() * 360}, 70%, 50%)`
+    fill: getConsistentColor(country._id, index)
   })) : [{ name: 'No Data', value: 1, fill: '#e5e7eb' }];
 
   const browserChartData = topBrowsers.length > 0 ? topBrowsers.map(browser => ({
@@ -618,7 +667,7 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
                 }}></div>
                 <p style={{ color: '#64748b', margin: 0, fontSize: '16px', fontWeight: '500' }}>Loading click logs...</p>
               </div>
-            ) : clickLogs.length === 0 ? (
+            ) : currentClickLogs.length === 0 ? (
               <div style={{ 
                 textAlign: 'center', 
                 padding: '60px 20px', 
@@ -688,7 +737,7 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {clickLogs.slice(0, 8).map((log, index) => (
+                    {currentClickLogs.map((log, index) => (
                       <tr key={index} style={{ 
                         borderBottom: '1px solid #f1f5f9',
                         backgroundColor: index % 2 === 0 ? 'white' : '#f8fafc',
@@ -811,6 +860,142 @@ const ClickLogsModal = ({ isOpen, onClose, urlId, urlName }) => {
                     ))}
                   </tbody>
                 </table>
+                
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div style={{
+                    padding: '16px 20px',
+                    borderTop: '1px solid #e2e8f0',
+                    backgroundColor: '#f8fafc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{
+                      fontSize: '13px',
+                      color: '#64748b',
+                      fontWeight: '500'
+                    }}>
+                      Showing {startIndex + 1}-{Math.min(endIndex, clickLogs.length)} of {clickLogs.length} clicks
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      {/* Previous Page Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        style={{
+                          padding: '8px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px',
+                          backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                          color: currentPage === 1 ? '#9ca3af' : '#374151',
+                          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== 1) {
+                            e.target.style.backgroundColor = '#f9fafb';
+                            e.target.style.borderColor = '#9ca3af';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== 1) {
+                            e.target.style.backgroundColor = 'white';
+                            e.target.style.borderColor = '#d1d5db';
+                          }
+                        }}
+                      >
+                        <ChevronLeftIcon className="w-4 h-4" />
+                        Previous
+                      </button>
+                      
+                      {/* Page Numbers */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            style={{
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '8px',
+                              backgroundColor: page === currentPage ? '#3b82f6' : 'white',
+                              color: page === currentPage ? 'white' : '#374151',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: '500',
+                              minWidth: '40px',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (page !== currentPage) {
+                                e.target.style.backgroundColor = '#f9fafb';
+                                e.target.style.borderColor = '#9ca3af';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (page !== currentPage) {
+                                e.target.style.backgroundColor = 'white';
+                                e.target.style.borderColor = '#d1d5db';
+                              }
+                            }}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Next Page Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          padding: '8px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px',
+                          backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                          color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== totalPages) {
+                            e.target.style.backgroundColor = '#f9fafb';
+                            e.target.style.borderColor = '#9ca3af';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== totalPages) {
+                            e.target.style.backgroundColor = 'white';
+                            e.target.style.borderColor = '#d1d5db';
+                          }
+                        }}
+                      >
+                        Next
+                        <ChevronRightIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
