@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://app.snipurl.site/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+
+# Allow important pages
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /about
+Allow: /features
+Allow: /pricing
+Allow: /contact
+
+# Crawl delay (optional)
+Crawl-delay: 1
