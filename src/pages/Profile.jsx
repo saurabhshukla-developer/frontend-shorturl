@@ -132,7 +132,7 @@ const Profile = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Personal Information</h2>
-              <button
+              {/* <button
                 onClick={() => setIsEditing(!isEditing)}
                 className="flex items-center text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
               >
@@ -147,7 +147,7 @@ const Profile = () => {
                     Edit
                   </>
                 )}
-              </button>
+              </button> */}
             </div>
 
             <form onSubmit={handleProfileUpdate}>

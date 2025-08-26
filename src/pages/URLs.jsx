@@ -33,6 +33,7 @@ const URLs = () => {
   const [selectedUrl, setSelectedUrl] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     originalUrl: '',
@@ -45,11 +46,11 @@ const URLs = () => {
   useEffect(() => {
     fetchData();
     fetchGroups();
-  }, []);
+  }, [showInactive]);
 
   const fetchData = async () => {
     try {
-      const urlsResult = await urlService.getShortUrls();
+      const urlsResult = await urlService.getShortUrls(showInactive ? { isActive: false } : { isActive: true });
       
       if (urlsResult && Array.isArray(urlsResult)) {
         setUrls(urlsResult);
@@ -127,12 +128,23 @@ const URLs = () => {
   const handleDelete = async () => {
     try {
       await urlService.deleteShortUrl(selectedUrl._id);
-      toast.success('URL deleted successfully!');
+      toast.success('URL permanently deleted!');
       setShowDeleteModal(false);
       setSelectedUrl(null);
       fetchData();
     } catch (error) {
       toast.error(error.message || 'Failed to delete URL');
+    }
+  };
+
+  const handleToggleStatus = async (url) => {
+    try {
+      await urlService.toggleUrlStatus(url._id);
+      const status = url.isActive ? 'deactivated' : 'activated';
+      toast.success(`URL ${status} successfully!`);
+      fetchData();
+    } catch (error) {
+      toast.error(error.message || 'Failed to toggle URL status');
     }
   };
 
@@ -216,16 +228,41 @@ const URLs = () => {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <MagnifyingGlassIcon className="h-5 w-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search URLs by name or original URL..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-        />
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search Bar */}
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="h-5 w-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search URLs by name or original URL..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+          />
+        </div>
+        
+        {/* Show Inactive Toggle */}
+        <div className="flex items-center space-x-3">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+              className="sr-only"
+            />
+            <div className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+              showInactive ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
+            }`}>
+              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
+                showInactive ? 'transform translate-x-5' : ''
+              }`}></div>
+            </div>
+            <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Show Inactive URLs
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* URLs Grid */}
@@ -333,6 +370,21 @@ const URLs = () => {
                       <PencilIcon className="h-4 w-4" />
                     </button>
                     <button
+                      onClick={() => handleToggleStatus(url)}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        url.isActive 
+                          ? 'text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20' 
+                          : 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                      }`}
+                      title={url.isActive ? 'Deactivate URL' : 'Activate URL'}
+                    >
+                      {url.isActive ? (
+                        <div className="h-4 w-4 bg-green-500 rounded-full"></div>
+                      ) : (
+                        <div className="h-4 w-4 bg-yellow-500 rounded-full border-2 border-yellow-300"></div>
+                      )}
+                    </button>
+                    <button
                       onClick={() => openDeleteModal(url)}
                       className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
                       title="Delete URL"
@@ -341,18 +393,30 @@ const URLs = () => {
                     </button>
                   </div>
                   
-                  {/* Visit Button */}
-                  {url.shortUrl && (
-                    <a
-                      href={`${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-all duration-200"
-                    >
-                      <GlobeAltIcon className="h-3 w-3 mr-1" />
-                      Visit
-                    </a>
-                  )}
+                  {/* Status Badge and Visit Button */}
+                  <div className="flex items-center space-x-2">
+                    {/* Status Badge */}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      url.isActive 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                    }`}>
+                      {url.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    
+                    {/* Visit Button */}
+                    {url.shortUrl && url.isActive && (
+                      <a
+                        href={`${import.meta.env.VITE_SHORT_URL_BASE || window.location.origin}/${url.shortUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-all duration-200"
+                      >
+                        <GlobeAltIcon className="h-3 w-3 mr-1" />
+                        Visit
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -652,14 +716,14 @@ const URLs = () => {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Are you sure you want to delete "<span className="font-medium text-gray-900 dark:text-white">{selectedUrl?.name || 'this URL'}</span>"? This action cannot be undone.
+                    Are you sure you want to permanently delete "<span className="font-medium text-gray-900 dark:text-white">{selectedUrl?.name || 'this URL'}</span>"? This action cannot be undone and all click data will be lost.
                   </p>
                 </div>
                 
                 <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 sm:flex sm:flex-row-reverse">
                   <button
                     onClick={handleDelete}
-                    className="btn-danger w-full sm:w-auto sm:ml-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                    className="btn-danger w-full sm:w-auto sm:ml-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.0 transition-all duration-200"
                   >
                     Delete URL
                   </button>

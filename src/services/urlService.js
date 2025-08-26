@@ -10,9 +10,17 @@ class URLService {
     }
   }
 
-  async getShortUrls() {
+  async getShortUrls(params = {}) {
     try {
-      const response = await apiClient.get('/api/urls');
+      const queryParams = new URLSearchParams();
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.search) queryParams.append('search', params.search);
+      if (params.groupId) queryParams.append('groupId', params.groupId);
+      if (params.isActive !== undefined) queryParams.append('isActive', params.isActive);
+
+      const url = params.isActive !== undefined ? `/api/urls?${queryParams}` : '/api/urls';
+      const response = await apiClient.get(url);
       // The backend returns { success: true, data: [], pagination: {...} }
       return response.data.data || [];
     } catch (error) {
@@ -42,6 +50,15 @@ class URLService {
   async deleteShortUrl(id) {
     try {
       const response = await apiClient.delete(`/api/urls/${id}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async toggleUrlStatus(id) {
+    try {
+      const response = await apiClient.patch(`/api/urls/${id}/toggle-status`);
       return response.data;
     } catch (error) {
       throw this.handleError(error);

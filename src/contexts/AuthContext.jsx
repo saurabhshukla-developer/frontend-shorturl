@@ -73,13 +73,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    const currentToken = token; // Store current token before clearing
     setUser(null);
     setIsAuthenticated(false);
     setToken(null);
     setRefreshToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    if (token) {
+    if (currentToken) {
       authService.logout().catch(() => {});
     }
   };
