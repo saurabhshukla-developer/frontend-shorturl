@@ -34,14 +34,20 @@ const Groups = () => {
 
   const fetchData = async () => {
     try {
-      const [groupsData, urlsData] = await Promise.all([
+      const [groupsData, urlsResponse] = await Promise.all([
         groupService.getGroups(),
         urlService.getShortUrls(),
       ]);
-      setGroups(groupsData);
-      setUrls(urlsData);
+      setGroups(groupsData || []);
+      // Extract the data array from the response
+      if (urlsResponse && Array.isArray(urlsResponse.data)) {
+        setUrls(urlsResponse.data);
+      } else {
+        setUrls([]);
+      }
     } catch (error) {
       toast.error('Failed to fetch data');
+      setUrls([]);
     } finally {
       setLoading(false);
     }
@@ -110,6 +116,14 @@ const Groups = () => {
   };
 
   const getGroupStats = (groupId) => {
+    // Ensure urls is always an array
+    if (!Array.isArray(urls)) {
+      return {
+        urlCount: 0,
+        totalClicks: 0,
+      };
+    }
+    
     const groupUrls = urls.filter(url => 
       url.groupId?._id === groupId || url.groupId === groupId
     );
@@ -230,7 +244,7 @@ const Groups = () => {
                   </div>
                 </div>
 
-                {stats.urlCount > 0 && (
+                {stats.urlCount > 0 && Array.isArray(urls) && (
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Recent URLs
