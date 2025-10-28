@@ -45,6 +45,7 @@ const URLs = () => {
     originalUrl: '',
     shortUrl: '',
     groupId: '',
+    expiresAt: '',
   });
 
 
@@ -123,10 +124,11 @@ const URLs = () => {
     }
     
     try {
-      // Handle empty groupId - convert empty string to null
+      // Handle empty groupId and expiresAt - convert empty string to null/undefined
       const createData = {
         ...formData,
-        groupId: formData.groupId === '' ? null : formData.groupId
+        groupId: formData.groupId === '' ? null : formData.groupId,
+        expiresAt: formData.expiresAt === '' ? undefined : formData.expiresAt
       };
       
       await urlService.createShortUrl(createData);
@@ -142,10 +144,11 @@ const URLs = () => {
   const handleEdit = async (e) => {
     e.preventDefault();
     try {
-      // Handle empty groupId - convert empty string to null
+      // Handle empty groupId and expiresAt - convert empty string to null
       const updateData = {
         ...formData,
-        groupId: formData.groupId === '' ? null : formData.groupId
+        groupId: formData.groupId === '' ? null : formData.groupId,
+        expiresAt: formData.expiresAt === '' ? null : formData.expiresAt
       };
       
       await urlService.updateShortUrl(selectedUrl._id, updateData);
@@ -187,17 +190,32 @@ const URLs = () => {
       originalUrl: '',
       shortUrl: '',
       groupId: '',
+      expiresAt: '',
     });
   };
 
   const openEditModal = (url) => {
     if (!url) return;
     setSelectedUrl(url);
+    
+    // Helper to convert date to local datetime-local format
+    const formatDateForInput = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+    
     const formDataToSet = {
       name: url.name || '',
       originalUrl: url.originalUrl || '',
       shortUrl: url.shortUrl || '',
       groupId: url.groupId?._id || url.groupId || '',
+      expiresAt: url.expiresAt ? formatDateForInput(url.expiresAt) : '',
     };
     setFormData(formDataToSet);
     setShowEditModal(true);
@@ -378,6 +396,25 @@ const URLs = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Expiration Status */}
+                {url.expiresAt && (
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <ClockIcon className="h-4 w-4 text-gray-400" />
+                      <span className={`text-xs font-medium ${
+                        new Date(url.expiresAt) < new Date() 
+                          ? 'text-red-600 dark:text-red-400' 
+                          : 'text-gray-600 dark:text-gray-300'
+                      }`}>
+                        {new Date(url.expiresAt) < new Date() 
+                          ? 'Expired'
+                          : `Expires: ${new Date(url.expiresAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
@@ -628,6 +665,22 @@ const URLs = () => {
                           Organize your URLs by grouping them together
                         </p>
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Expiration Date & Time (Optional)
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={formData.expiresAt}
+                          onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                          className="input-field"
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Set when this URL should expire (leave empty for no expiration)
+                        </p>
+                      </div>
                     </div>
                   </div>
                   
@@ -747,6 +800,22 @@ const URLs = () => {
                         </select>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Organize your URLs by grouping them together
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Expiration Date & Time (Optional)
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={formData.expiresAt}
+                          onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                          className="input-field"
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Set when this URL should expire (leave empty for no expiration)
                         </p>
                       </div>
                     </div>
