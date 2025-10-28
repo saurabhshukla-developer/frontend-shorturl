@@ -17,12 +17,13 @@ class URLService {
       if (params.limit) queryParams.append('limit', params.limit);
       if (params.search) queryParams.append('search', params.search);
       if (params.groupId) queryParams.append('groupId', params.groupId);
-      if (params.isActive !== undefined) queryParams.append('isActive', params.isActive);
+      if (params.isActive !== undefined) queryParams.append('isActive', String(params.isActive));
 
-      const url = params.isActive !== undefined ? `/api/urls?${queryParams}` : '/api/urls';
+      const queryString = queryParams.toString();
+      const url = queryString ? `/api/urls?${queryString}` : '/api/urls';
       const response = await apiClient.get(url);
       // The backend returns { success: true, data: [], pagination: {...} }
-      return response.data.data || [];
+      return response.data;
     } catch (error) {
       const errorMessage = this.handleError(error);
       throw errorMessage;

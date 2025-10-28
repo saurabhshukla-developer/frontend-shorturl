@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { urlService } from '../services/urlService';
 import { groupService } from '../services/groupService';
@@ -34,6 +34,12 @@ const URLs = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showInactive, setShowInactive] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    pages: 1
+  });
   const [formData, setFormData] = useState({
     name: '',
     originalUrl: '',
@@ -43,17 +49,29 @@ const URLs = () => {
 
 
 
-  useEffect(() => {
-    fetchData();
-    fetchGroups();
-  }, [showInactive]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const urlsResult = await urlService.getShortUrls(showInactive ? { isActive: false } : { isActive: true });
+      setLoading(true);
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+        ...(showInactive ? { isActive: false } : { isActive: true }),
+        ...(searchTerm ? { search: searchTerm } : {})
+      };
       
-      if (urlsResult && Array.isArray(urlsResult)) {
-        setUrls(urlsResult);
+      const response = await urlService.getShortUrls(params);
+      
+      if (response && Array.isArray(response.data)) {
+        setUrls(response.data);
+        
+        // Update pagination info if provided
+        if (response.pagination) {
+          setPagination(prev => ({
+            ...prev,
+            total: response.pagination.total,
+            pages: response.pagination.pages
+          }));
+        }
       } else {
         setUrls([]);
         toast.error('Failed to fetch URLs');
@@ -64,7 +82,22 @@ const URLs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, showInactive, searchTerm]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  useEffect(() => {
+    // Reset to page 1 when showInactive or searchTerm changes
+    if (pagination.page !== 1) {
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }
+  }, [showInactive, searchTerm]);
 
   const fetchGroups = async () => {
     try {
@@ -194,11 +227,7 @@ const URLs = () => {
     }
   };
 
-  const filteredUrls = (urls || []).filter(url => {
-    const matchesSearch = url.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         url.originalUrl.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  // Note: Backend handles search filtering
 
   if (loading) {
     return (
@@ -267,8 +296,8 @@ const URLs = () => {
 
       {/* URLs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(filteredUrls || []).length > 0 ? (
-          (filteredUrls || []).map((url, index) => (
+        {(urls || []).length > 0 ? (
+          (urls || []).map((url, index) => (
             <motion.div
               key={url._id || `url-${index}`}
               initial={{ opacity: 0, y: 20 }}
@@ -449,6 +478,62 @@ const URLs = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {pagination.pages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} to{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} URLs
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={pagination.page === 1}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Previous
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                let pageNum;
+                if (pagination.pages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.page <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.page >= pagination.pages - 2) {
+                  pageNum = pagination.pages - 4 + i;
+                } else {
+                  pageNum = pagination.page - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      pagination.page === pageNum
+                        ? 'bg-primary-600 text-white shadow-lg'
+                        : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={pagination.page === pagination.pages}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Create URL Modal */}
       <AnimatePresence>
