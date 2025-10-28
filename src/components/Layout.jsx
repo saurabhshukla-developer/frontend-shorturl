@@ -16,6 +16,7 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import ChatBot from './ChatBot';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -294,6 +295,9 @@ const Layout = ({ children }) => {
           </div>
         </main>
       </div>
+
+      {/* ChatBot - available on all pages for logged-in users */}
+      {user && <ChatBot />}
     </div>
   );
 };

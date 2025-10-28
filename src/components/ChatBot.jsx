@@ -188,7 +188,7 @@ const ChatBot = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">AI Assistant</h3>
-                  <p className="text-xs text-blue-100">Powered by OpenAI</p>
+                  <p className="text-xs text-blue-100">Powered by SnipURL</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -279,20 +279,35 @@ const ChatBot = () => {
 
           {/* Input Container */}
           <div className="border-t border-gray-100 p-3 bg-white shadow-lg">
-            <form onSubmit={handleSend} className="flex items-center gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
-                disabled={isLoading}
-              />
+            <form onSubmit={handleSend} className="flex items-end gap-2">
+              <div className="flex-1 relative">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (input.trim() && !isLoading) {
+                        handleSend(e);
+                      }
+                    }
+                  }}
+                  placeholder="Type your message... (Shift+Enter for new line)"
+                  className="flex-1 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md resize-none min-h-[44px] max-h-[120px]"
+                  disabled={isLoading}
+                  rows={1}
+                  style={{ maxHeight: '120px' }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-xl p-3 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 disabled:hover:scale-100"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-xl p-3 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 disabled:hover:scale-100 h-[44px]"
                 aria-label="Send message"
               >
                 <PaperAirplaneIcon className="h-5 w-5" />
