@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Create axios instance
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+  timeout: 120000, // 120 seconds timeout for AI responses
   headers: {
     'Content-Type': 'application/json',
   },
@@ -69,7 +69,7 @@ apiClient.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/refresh-token`,
+            `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/refresh-token`,
             { refreshToken }
           );
 

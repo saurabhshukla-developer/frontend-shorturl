@@ -4,6 +4,7 @@ import { dashboardService } from '../services/dashboardService';
 import { urlService } from '../services/urlService';
 import { groupService } from '../services/groupService';
 import { useAuth } from '../contexts/AuthContext';
+import ChatBot from '../components/ChatBot';
 import {
   LinkIcon,
   ChartBarIcon,
@@ -528,6 +529,9 @@ const Dashboard = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Chatbot Component */}
+      <ChatBot />
     </div>
   );
 };
