@@ -5,6 +5,7 @@ import { groupService } from '../services/groupService';
 import toast from 'react-hot-toast';
 import ClickLogsModal from '../components/ClickLogsModal';
 import GroupDetailsModal from '../components/GroupDetailsModal';
+import { formatDateToISTForInput, convertISTToISO } from '../utils/timezone';
 import {
   PlusIcon,
   PencilIcon,
@@ -125,10 +126,11 @@ const URLs = () => {
     
     try {
       // Handle empty groupId and expiresAt - convert empty string to null/undefined
+      // Convert expiresAt from IST (datetime-local) to ISO string for backend
       const createData = {
         ...formData,
         groupId: formData.groupId === '' ? null : formData.groupId,
-        expiresAt: formData.expiresAt === '' ? undefined : formData.expiresAt
+        expiresAt: formData.expiresAt === '' ? undefined : convertISTToISO(formData.expiresAt)
       };
       
       await urlService.createShortUrl(createData);
@@ -145,10 +147,11 @@ const URLs = () => {
     e.preventDefault();
     try {
       // Handle empty groupId and expiresAt - convert empty string to null
+      // Convert expiresAt from IST (datetime-local) to ISO string for backend
       const updateData = {
         ...formData,
         groupId: formData.groupId === '' ? null : formData.groupId,
-        expiresAt: formData.expiresAt === '' ? null : formData.expiresAt
+        expiresAt: formData.expiresAt === '' ? null : convertISTToISO(formData.expiresAt)
       };
       
       await urlService.updateShortUrl(selectedUrl._id, updateData);
@@ -198,24 +201,13 @@ const URLs = () => {
     if (!url) return;
     setSelectedUrl(url);
     
-    // Helper to convert date to local datetime-local format
-    const formatDateForInput = (dateString) => {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-    
     const formDataToSet = {
       name: url.name || '',
       originalUrl: url.originalUrl || '',
       shortUrl: url.shortUrl || '',
       groupId: url.groupId?._id || url.groupId || '',
-      expiresAt: url.expiresAt ? formatDateForInput(url.expiresAt) : '',
+      // Format date from database (UTC) to IST for datetime-local input
+      expiresAt: url.expiresAt ? formatDateToISTForInput(url.expiresAt) : '',
     };
     setFormData(formDataToSet);
     setShowEditModal(true);
